@@ -434,6 +434,45 @@ app.get('/app/api/query/full-schema', function (req, res) {
 });
 
 
+function toGraphQLQueryString(result, node) {
+	result += node.name;
+
+	if (result.length > 0) {
+		result += "{";
+		inputs.forEach((input, index, inputs) => {
+			if (input.inputType == 'String') {
+				if (input.value) {
+					result += input.name + ":" + (input.value ? JSON.stringify(input.value) : '""';
+					if (index != inputs.length - 1) {
+						result += ", ";
+					}
+				}
+			} else {
+				result += input.name + ":" + input.value;
+				if (index != inputs.length - 1) {
+					result += ", ";
+				}
+			}
+		});
+
+		result += ") ";
+	}
+
+	if (children.length > 0) {
+		result += "{";
+
+		children.forEach((child) => {
+			if (child.selected) {
+				result += toGraphQLQueryString(result + child.name + " ", child);
+			}
+		});
+
+		result += "} ";
+	}
+
+	return result;
+}
+
 
 /////   *******    /////
 app.put('/app/api/query/update',  function (req, res) {
