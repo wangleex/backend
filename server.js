@@ -9,6 +9,8 @@ var GitHubStrategy = require('passport-github').Strategy;
 var TwitterStrategy = require('passport-twitter').Strategy;
 var YoutubeV3Strategy = require('passport-youtube-v3').Strategy;
 
+const QueryNode = require('./Query.js');
+const fetch = require('node-fetch');
 'use strict';
 
 const fs = require('fs');
@@ -231,7 +233,7 @@ app.get('app/api/auth/logout', function (req, res) {
 
 // done
 app.get('/app/api/servers', function (req, res) {
-	/*client.connect(function(err, client) {
+	client.connect(function(err, client) {
 	  //assert.equal(null, err);
 	  console.log("Connected correctly to server");
 
@@ -253,9 +255,9 @@ app.get('/app/api/servers', function (req, res) {
 	  		res.send(toSend);
 	  });
 
-	});*/
+	});
 
-	var toSend = {
+	/*var toSend = {
 		data: [
 		    {
 		        name: 'reddit',
@@ -276,7 +278,7 @@ app.get('/app/api/servers', function (req, res) {
 		errors: {}
 	};
 
-	res.send(toSend);
+	res.send(toSend);*/
 
 
 });
@@ -313,7 +315,7 @@ app.put('/app/api/server/update', function (req, res) {
 
 ///   social media platforms    ////
 app.get('/app/api/social-media-platforms', function (req, res) {
-	/*client.connect(function(err, client) {
+	client.connect(function(err, client) {
 	  //assert.equal(null, err);
 	  console.log("Connected correctly to server");
 
@@ -335,10 +337,10 @@ app.get('/app/api/social-media-platforms', function (req, res) {
 	  		res.send(platforms);
 	  });
 
-	});*/
+	});
 
 
-	var toSend = {
+	/*var toSend = {
 		data: [
 			{
 		        name: 'Reddit',
@@ -368,7 +370,7 @@ app.get('/app/api/social-media-platforms', function (req, res) {
 		errors: {}
 	};
 
-	res.send(toSend);
+	res.send(toSend);*/
 });
 
 
@@ -376,16 +378,25 @@ app.get('/app/api/social-media-platforms', function (req, res) {
 ////     queries table     ////
 // done
 app.get('/app/api/queries', function (req, res) {
+	let toSend = {
+		data: [],
+		errors: {}
+	  };
 	con.query("select * from queries", function(err, output) {
 	  	if (err)
 	  		throw err;
 
-	  	res.send(output);
+	  	toSend.data = output;
+	  	res.send(toSend);
 	  });
 });
 
 // returning all slugs
 app.get('/app/api/query/sources', function (req, res) {
+	let toSend = {
+		data: [],
+		errors: {}
+	  };
 	db.collection('graphql_servers').find({}).toArray(function(err, r) {
 	  		//console.log('returning all servers!');
 	  		//db.close();
@@ -397,7 +408,9 @@ app.get('/app/api/query/sources', function (req, res) {
 	  			platforms.push(r[i].slug);
 	  		}
 	  		//res.sendStatus(200);
-	  		res.send(platforms);
+
+	  		toSend.data = platforms;
+	  		res.send(toSend);
 	  });
 
 
@@ -407,99 +420,24 @@ app.get('/app/api/query/sources', function (req, res) {
 
 // correct
 app.get('/app/api/query/full-schema', function (req, res) {
+	let toSend = {
+		data: {},
+		errors: {}
+	  };
 	con.query("select structure from queries limit 1", function(err, output) {
 	  	if (err)
 	  		throw err;
 
-	  	res.send(output);
+	  	toSend.data = output;
+	  	res.send(toSend);
 	  });
 });
-
-/*class QueryNode {
-    constructor(name, inputs, output, children, selected = false) {
-		this.name = name; // The 'Name' of this query node. It is a context sensitive name to refer to its name relative to its parent
-        this.inputs = inputs;  // Input[], inputs to thise node
-        this.output = output;  // Output, the type of output of this node
-        this.children = children; // QueryNode[], children of thise node
-        this.selected = selected; // Whether this node was selected
-    }
-
-	static isValidQuery(queryNode){
-		if(!queryNode || !queryNode.selected){
-			return false;
-		}
-
-		if(queryNode.output.isScalar){
-			return true;
-		}
-		
-		// If this node is selected and it's not a scalar, check its children
-		let childrenAreValid = false;
-		queryNode.children.forEach((child) => {
-			childrenAreValid = childrenAreValid || QueryNode.isValidQuery(child)
-		});
-
-		return childrenAreValid;
-	}
-
-	toGraphQLQueryString(){
-		if(!QueryNode.isValidQuery(this)){
-			return "";
-		}
-
-		let query = {string: this.name} 
-		
-		if(this.inputs.length > 0){
-			query.string += "(";
-			this.inputs.forEach((input, index, inputs) => {
-				if(input.inputType == 'String'){
-					if(input.value){
-						query.string += input.name + ":" + (input.value ?  JSON.stringify(input.value) : '""');
-						if(index != inputs.length - 1){
-							query.string += ", "
-						}
-					}
-				} else {
-					query.string += input.name + ":" + input.value
-						if(index != inputs.length - 1){
-							query.string += ", "
-						}
-				} 
-
-			});
-			query.string += ") ";
-		}
-	
-		if(this.children.length > 0){
-			query.string += "{ "
-
-			this.children.forEach((child) => {
-				if(QueryNode.isValidQuery(child) && child.selected){
-					query.string += child.toGraphQLQueryString() + " ";	
-				}
-			});
-			query.string += "} "
-		}
-
-		return query.string;
-	}
-
-}*/
 
 
 
 /////   *******    /////
 app.put('/app/api/query/update',  function (req, res) {
-
-	/*callQueryString() {
-		let rawdata = fs.readFileSync('fakeQuery.json');
-		let queryJson = JSON.parse(rawdata);
-		console.log(queryJson);
-
-		QueryNode q(queryJson.name, queryJson.inputs, queryJson.output, queryJson.children, queryJson.selected);
-		let gql_string = q.toGraphQLQueryString();
-		console.log(gql_string);
-	}
+	
 
 	let param = req.body;
 	if (param.type == 'ADD') {
@@ -527,10 +465,36 @@ app.put('/app/api/query/update',  function (req, res) {
 		  	res.send("values successfully deleted!");
 		  });
 	} else if (param.type == 'EXECUTE') {
-		callQueryString();
-	}*/
+		
+		/*let rawdata = fs.readFileSync('fakeQuery.json');
+		let queryJson = JSON.parse(rawdata);
+		console.log(queryJson);
 
-	const QuerySchedule = {
+		let querynode = new QueryNode(queryJson.name, queryJson.inputs, queryJson.output, queryJson.children, queryJson.selected);
+		let gql_string = querynode.toGraphQLQueryString();
+		console.log(gql_string);*/
+
+
+
+		const data = {
+	      variables: null,
+	      query: '{ top (subreddit: "uiuc") { data { children { data { title } } } } }',
+	    };
+
+	    fetch('http://localhost:4000/', {
+	      method: 'POST',
+	      body: JSON.stringify(data),
+	      headers: {
+	        'Content-Type': 'application/json',
+	      },
+	    }).then((response) => response.json())
+	    .then((result) => {
+	    	console.log(result);
+	    	res.send(result);
+	    })
+	}
+
+	/*const QuerySchedule = {
 		AD_HOC: 0,
 		PER_DAY: 1
 	}
@@ -553,7 +517,7 @@ app.put('/app/api/query/update',  function (req, res) {
 		errors: {}
 	};
 
-	res.send(toSend);
+	res.send(toSend);*/
 
 
 });
@@ -572,7 +536,13 @@ app.put('/app/api/query/update',  function (req, res) {
 
 ////     query_histories table     ////
 app.get('/app/api/query/history-records', function (req, res) {
-	/*client.connect(function(err, client) {
+	let qName = req.body.queryName;
+	let toSend = [{
+		data: {},
+		runtime: {},
+		executionTimestamp: {}
+	  }];
+	client.connect(function(err, client) {
 	  //assert.equal(null, err);
 	  console.log("Connected correctly to server");
 
@@ -580,17 +550,21 @@ app.get('/app/api/query/history-records', function (req, res) {
 
 	  console.log(req.body);
 
-	  db.collection('query_histories').find({}).toArray(function(err, r) {
+	  db.collection('query_histories').find({name:qName}).toArray(function(err, r) {
 	  		console.log('inserted successfully!');
 	  		//client.close();
 	  		let body = {message: "Success!!"}
 	  		//res.sendStatus(200);
-	  		res.send(r);
+
+	  		for (let i = 0; i < r.length; i = i + 1) {
+
+	  		}
+	  		res.send();
 	  });
 
-	});*/
+	});
 
-	var fakeGitHubQueryResponse = fs.readFileSync('fakeGithubQuery.json');
+	/*var fakeGitHubQueryResponse = fs.readFileSync('fakeGithubQuery.json');
 
 	var toSend = {
 		data: [
@@ -614,7 +588,7 @@ app.get('/app/api/query/history-records', function (req, res) {
 		]
 	};
 
-	res.send(toSend);
+	res.send(toSend);*/
 
 });
 
@@ -622,7 +596,7 @@ app.get('/app/api/query/history-records', function (req, res) {
 ////     users table     ////
 // done
 app.get('/app/api/users', function (req, res) {
-	/*client.connect(function(err, client) {
+	client.connect(function(err, client) {
 	  //assert.equal(null, err);
 	  console.log("Connected correctly to server");
 
@@ -637,9 +611,9 @@ app.get('/app/api/users', function (req, res) {
 	  		res.send(toSend);
 	  });
 
-	});*/
+	});
 
-
+	/*
 	var toSend = {
 		data: [
 			{name: `Start from App`, isAdmin: true, email: `user1@email.com`, quota: 1, usedQuota: 0.5}
@@ -648,6 +622,7 @@ app.get('/app/api/users', function (req, res) {
 	};
 
 	res.send(toSend);
+	*/
 });
 
 /*
@@ -726,7 +701,7 @@ app.put('/app/api/user/update', function (req, res) {
 ////     applications table     ////
 // done 1
 app.get('/app/api/applications', function (req, res) {
-	/*let toSend = {
+	let toSend = {
 		data: [],
 		errors: {}
 	};
@@ -737,8 +712,9 @@ app.get('/app/api/applications', function (req, res) {
 	  		toSend.data = output;
 	  		res.send(toSend);
 	  	}
-	  });*/
-
+	  });
+	
+	/*
 	  var toSend = {
 		data: [
 			{
@@ -749,6 +725,7 @@ app.get('/app/api/applications', function (req, res) {
 	  };
 
 	  res.send(toSend);
+	  */
 
 });
 
