@@ -21,7 +21,7 @@ const jwt = require('jsonwebtoken');
 const bodyParser = require('body-parser')
 
 app.use(express.json());
-/*app.use(passport.initialize());
+app.use(passport.initialize());
 app.use(passport.session());
 
 passport.serializeUser(function(user, done) {
@@ -30,7 +30,7 @@ passport.serializeUser(function(user, done) {
 
 passport.deserializeUser(function(user, done) {
   done(null, user);
-});*/
+});
 
 var MongoClient = require('mongodb').MongoClient;
 var url = 'mongodb://localhost:27017/listenonline';
@@ -51,7 +51,7 @@ con.connect(function(err) {
 
 
 
-/*passport.use(new GitHubStrategy({
+passport.use(new GitHubStrategy({
     clientID: '73027a965065212c02ac',
     clientSecret: '3d3b581788e225f4e6bd9fe96bfe0d322c3a79c1',
     callbackURL: "http://localhost:3000/auth/github/callback"
@@ -131,7 +131,7 @@ app.get('/auth/youtube/callback',
   function(req, res) {
     // Successful authentication, redirect home.
     res.redirect('/check');
-  });*/
+  });
 
 app.get('/', function (req, res) {
 	console.log('hiiiiAniii');
@@ -151,7 +151,7 @@ app.post('/app/api/auth/login', function (req, res) {
 	// send error
 	let toSend = {
 		data: {},
-		errors: {}
+		error: {}
 	};
 
 	con.query("select * from users where name = " + username, function(err, output) {
@@ -159,13 +159,13 @@ app.post('/app/api/auth/login', function (req, res) {
 	  		throw err;
 
 	  	if (output.length == 0) {
-	  		toSend.errors = req.body;
+	  		toSend.error = req.body;
 	  		res.send(toSend);
 	  	} else if (pass == output.password) {
 	  		toSend.data = output;
 	  		res.send(toSend);
 	  	} else {
-	  		toSend.errors = req.body;
+	  		toSend.error = req.body;
 	  		res.send(toSend);
 	  	}
 
@@ -180,13 +180,13 @@ app.post('/app/api/auth/register', function (req, res) {
 
 	let toSend = {
 		data: {},
-		errors: {}
+		error: {}
 	};
 
 	con.query("insert into users(name, email, password, invitationCode) values ('" + username + "', '" + email_ins + "', '" 
 		+ pass + "', " + invCode + ")", function(err, output) {
 	  	if (err) {
-	  		toSend.errors = req.body;
+	  		toSend.error = req.body;
 	  		res.send(toSend);
 	  	} else {
 	  		con.query("select email, name, isAdmin from User where name = '" + username + "'", function(err, output) {
@@ -242,7 +242,7 @@ app.get('/app/api/servers', function (req, res) {
 	  //console.log(req.body);
 	  let toSend = {
 		data: [],
-		errors: {}
+		error: {}
 	  };
 
 
@@ -275,7 +275,7 @@ app.get('/app/api/servers', function (req, res) {
 		        requireAuthentication: false,
 		        requireAuthorization: true
 		    }],
-		errors: {}
+		error: {}
 	};
 
 	res.send(toSend);*/
@@ -298,12 +298,12 @@ app.put('/app/api/server/update', function (req, res) {
 
 	  let toSend = {
 		data: {},
-		errors: {}
+		error: {}
 	  };
 
 	  db.collection('graphql_servers').replaceOne({name:serverName}, toUpdate, function(err, res) {
 	    if (err) {
-	    	toSend.errors = toUpdate;
+	    	toSend.error = toUpdate;
 	    	res.send(toSend);
 	    } else {
 	    	toSend.data = toUpdate;
@@ -315,6 +315,11 @@ app.put('/app/api/server/update', function (req, res) {
 
 ///   social media platforms    ////
 app.get('/app/api/social-media-platforms', function (req, res) {
+
+	let toSend = {
+		data: {},
+		error: {}
+	  };
 	client.connect(function(err, client) {
 	  //assert.equal(null, err);
 	  console.log("Connected correctly to server");
@@ -334,7 +339,9 @@ app.get('/app/api/social-media-platforms', function (req, res) {
 	  			platforms.push(r[i].slug);
 	  		}
 	  		//res.sendStatus(200);
-	  		res.send(platforms);
+	  		//res.send(platforms);
+	  		toSend.data = platforms;
+	  		res.send(toSend);
 	  });
 
 	});
@@ -367,7 +374,7 @@ app.get('/app/api/social-media-platforms', function (req, res) {
 		        isAuthenticated: false
 		    }
 		],
-		errors: {}
+		error: {}
 	};
 
 	res.send(toSend);*/
@@ -380,7 +387,7 @@ app.get('/app/api/social-media-platforms', function (req, res) {
 app.get('/app/api/queries', function (req, res) {
 	let toSend = {
 		data: [],
-		errors: {}
+		error: {}
 	  };
 	con.query("select * from queries", function(err, output) {
 	  	if (err)
@@ -395,7 +402,7 @@ app.get('/app/api/queries', function (req, res) {
 app.get('/app/api/query/sources', function (req, res) {
 	let toSend = {
 		data: [],
-		errors: {}
+		error: {}
 	  };
 	db.collection('graphql_servers').find({}).toArray(function(err, r) {
 	  		//console.log('returning all servers!');
@@ -422,7 +429,7 @@ app.get('/app/api/query/sources', function (req, res) {
 app.get('/app/api/query/full-schema', function (req, res) {
 	let toSend = {
 		data: {},
-		errors: {}
+		error: {}
 	  };
 	con.query("select structure from queries limit 1", function(err, output) {
 	  	if (err)
@@ -442,7 +449,7 @@ function toGraphQLQueryString(result, node) {
 		inputs.forEach((input, index, inputs) => {
 			if (input.inputType == 'String') {
 				if (input.value) {
-					result += input.name + ":" + (input.value ? JSON.stringify(input.value) : '""';
+					result += input.name + ":" + (input.value ? JSON.stringify(input.value) : '""');
 					if (index != inputs.length - 1) {
 						result += ", ";
 					}
@@ -476,10 +483,13 @@ function toGraphQLQueryString(result, node) {
 
 /////   *******    /////
 app.put('/app/api/query/update',  function (req, res) {
-	
+	let toSend = {
+		data: {},
+		error: {}
+	  };
 
 	let param = req.body;
-	if (param.type == 'ADD') {
+	if (param.type == 0) {
 		let toInsert = param.data;
 		let serv_id = 0;
 		if (toInsert.source == 'reddit') {
@@ -494,16 +504,33 @@ app.put('/app/api/query/update',  function (req, res) {
 		  	if (err)
 		  		throw err;
 
-		  	res.send("values successfully inserted!");
+		  	//res.send("values successfully inserted!");
+
+		  	con.query("select * from queries", function (error, result) {
+		  		if (error) {
+		  			throw error;
+		  		}
+
+		  		toSend.data = result;
+		  		res.send(toSend);
+		  	});
+		 
 		  });
-	} else if (param.type == 'DELETE') {
+	} else if (param.type == 1) {
 		con.query("delete from queries where name = '" + param.data.name + "'", function(err, output) {
 		  	if (err)
 		  		throw err;
 
-		  	res.send("values successfully deleted!");
+		  	con.query("select * from queries", function (error, result) {
+		  		if (error) {
+		  			throw error;
+		  		}
+
+		  		toSend.data = result;
+		  		res.send(toSend);
+		  	});
 		  });
-	} else if (param.type == 'EXECUTE') {
+	} else if (param.type == 2) {
 		
 		/*let rawdata = fs.readFileSync('fakeQuery.json');
 		let queryJson = JSON.parse(rawdata);
@@ -553,7 +580,7 @@ app.put('/app/api/query/update',  function (req, res) {
 		        schema: fakeGitHubQuery
 		    }
 		],
-		errors: {}
+		error: {}
 	};
 
 	res.send(toSend);*/
@@ -642,7 +669,7 @@ app.get('/app/api/users', function (req, res) {
 	  const db = client.db('listenonline');
 	  let toSend = {
 		data: [],
-		errors: {}
+		error: {}
 	  };
 	  db.collection('users').find({}, {name:1, isAdmin:1, email:1, quota:1, usedQuota:1}).toArray(function(err, r) {
 	  		console.log('returning all users!');
@@ -657,7 +684,7 @@ app.get('/app/api/users', function (req, res) {
 		data: [
 			{name: `Start from App`, isAdmin: true, email: `user1@email.com`, quota: 1, usedQuota: 0.5}
 		],
-		errors: {}
+		error: {}
 	};
 
 	res.send(toSend);
@@ -690,13 +717,13 @@ app.put('/app/api/user/update', function (req, res) {
 
 	let toSend = {
 			data: [],
-			errors: {}
+			error: {}
 		  };
 
 	if (toUpdate.type == 0) {
 		con.query("delete from users where name = " + toUpdate.name, function(err, output) {
 		  	if (err) {
-		  		toSend.errors = {quota: toUpdate.quota};
+		  		toSend.error = {quota: toUpdate.quota};
 		  		res.send(toSend);
 		  	}
 
@@ -704,7 +731,7 @@ app.put('/app/api/user/update', function (req, res) {
 
 		con.query("select * from users ", function(err, output) {
 		  	if (err) {
-		  		toSend.errors = {quota: toUpdate.quota};
+		  		toSend.error = {quota: toUpdate.quota};
 		  		res.send(toSend);
 		  	} else {
 		  		toSend.data = output;
@@ -716,7 +743,7 @@ app.put('/app/api/user/update', function (req, res) {
 		con.query("update users set name = " + toUpdate.name + ", email = '" + toUpdate.email + 
 			"', isAdmin = " + toUpdate.isAdmin + ", quota = " + toUpdate.quota + ", usedQuota = " + toUpdate.usedQuota, function(err, output) {
 		  	if (err){
-		  		toSend.errors = {quota: toUpdate.quota};
+		  		toSend.error = {quota: toUpdate.quota};
 		  		res.send(toSend);
 		  	}
 
@@ -725,7 +752,7 @@ app.put('/app/api/user/update', function (req, res) {
 		
 		con.query("select * from users ", function(err, output) {
 		  	if (err) {
-		  		toSend.errors = {quota: toUpdate.quota};
+		  		toSend.error = {quota: toUpdate.quota};
 		  		res.send(toSend);
 		  	} else {
 		  		toSend.data = output;
@@ -742,7 +769,7 @@ app.put('/app/api/user/update', function (req, res) {
 app.get('/app/api/applications', function (req, res) {
 	let toSend = {
 		data: [],
-		errors: {}
+		error: {}
 	};
 	con.query("select * from applications", function(err, output) {
 	  	if (err) {
@@ -760,7 +787,7 @@ app.get('/app/api/applications', function (req, res) {
 		        name: 'xxx', callbackURL: 'www.google.com', home: 'anything'
 		    }
 		],
-		errors: {}
+		error: {}
 	  };
 
 	  res.send(toSend);
@@ -774,7 +801,7 @@ app.put('/app/api/application/update', function (req, res) {
 
 	let toSend = {
 		data: [],
-		errors: {}
+		error: {}
 	};
 
 	var updatebody = toUpdate.data;
@@ -851,6 +878,7 @@ app.put('/app/api/application/update', function (req, res) {
 				  				name: updatebody.name
 				  			}
 				  		}
+				  		toSend.error = errObj;
 				  		res.send(toSend);
 	  	} else {
 			  		con.query("select * from applications", function(err, output) {
@@ -862,6 +890,7 @@ app.put('/app/api/application/update', function (req, res) {
 					  				name: updatebody.name
 					  			}
 					  		}
+					  		toSend.error = errObj;
 					  		res.send(toSend);
 					  	} else {
 					  		toSend.data = output;
