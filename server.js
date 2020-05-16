@@ -1,136 +1,112 @@
+require('dotenv').config()
 var express = require('express');
 var app = express();
-var util = require('util');
-var mysql = require('mysql');
-const axios = require('axios');
+const crypto = require('crypto');
+const { CLIENT_ORIGIN } = require('./config')
+const cors = require('cors');
 const passport = require('passport');
-var RedditStrategy = require('passport-reddit').Strategy;
-var GitHubStrategy = require('passport-github').Strategy;
-var TwitterStrategy = require('passport-twitter').Strategy;
-var YoutubeV3Strategy = require('passport-youtube-v3').Strategy;
-
-const QueryNode = require('./Query.js');
-const fetch = require('node-fetch');
-'use strict';
-
+const socketio = require('socket.io');
+const passportInit = require('./lib/passport.init');
+const authController = require('./lib/auth.controller');
+const session = require('express-session');
+const bcrypt = require('bcrypt');
+const expressMongoDb = require('express-mongo-db');
+const { introspectionQuery } = require('graphql');
+const get_graphql_data = require('./graphql_util');
+const {getNextSequenceValue, client} = require('./mongodb_util');
+const con = require('./sql');
+const MongoStore = require('connect-mongo')(session);
+const util = require('util');
 const fs = require('fs');
+const fetch = require('node-fetch');
 
+const query = util.promisify(con.query).bind(con);
 
-const jwt = require('jsonwebtoken');
+const reddit_schema =  JSON.parse(fs.readFileSync('reddit_schema.json', 'utf8'));
+const reddit_response =  JSON.parse(fs.readFileSync('reddit_response.json', 'utf8'));
 
-const bodyParser = require('body-parser')
+'use strict';
 
 app.use(express.json());
 app.use(passport.initialize());
-app.use(passport.session());
+passportInit();
 
-passport.serializeUser(function(user, done) {
-  done(null, user);
-});
+app.use(cors({
+	origin: CLIENT_ORIGIN
+})) 
 
-passport.deserializeUser(function(user, done) {
-  done(null, user);
-});
+app.use(session({ 
+	secret: process.env.SESSION_SECRET, 
+	resave: true, 
+	saveUninitialized: true,
+	store: new MongoStore({ client })
+  }))
 
-var MongoClient = require('mongodb').MongoClient;
-var url = 'mongodb://localhost:27017/listenonline';
-const client = new MongoClient(url);
+client.connect(async function(err, client) {
+	const db = client.db('listenonline');
 
-var con = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "anrMar#18",
-  database: "hello_world"
-});
+	try {
+		const counter = await db.collection('counters').findOne({_id: "server_id"});
 
-con.connect(function(err) {
-	if (err)
-		throw err;
-	console.log("Connected correctly to SQL");
-});
+		if (!counter) {
+			db.collection('counters').insertOne({_id:"server_id",sequence_value:0})
+		}
 
-
-
-passport.use(new GitHubStrategy({
-    clientID: '73027a965065212c02ac',
-    clientSecret: '3d3b581788e225f4e6bd9fe96bfe0d322c3a79c1',
-    callbackURL: "http://localhost:3000/auth/github/callback"
-  },
-  function(accessToken, refreshToken, profile, cb) {
-    return cb(null, profile);
-  }
-));
-
-app.get('/auth/github',
-  passport.authenticate('github'));
-
-app.get('/auth/github/callback', 
-  passport.authenticate('github', { failureRedirect: '/login' }),
-  function(req, res) {
-    // Successful authentication, redirect home.
-    res.redirect('/check');
+	} catch (error) {
+		throw error;
+	}
   });
 
-passport.use(new RedditStrategy({
-    clientID: 'M6oMtX6GmlXavQ',
-    clientSecret: 'rQV1UTfMdWyHm1urW3TOLvRHlbQ',
-    callbackURL: "http://localhost:3000/auth/reddit/callback"
-  },
-  function(accessToken, refreshToken, profile, done) {
-    return done(null, profile);
+
+app.use(expressMongoDb('mongodb://localhost:27017/listenonline'));
+
+
+
+app.all('*', checkUser);
+
+function checkUser(req, res, next) {
+
+  if ( req.path.startsWith('/app/api/auth')) {
+	return next();
   }
-));
 
+  if (req.session.user_id) {
+	  
+	  if ((req.path.startsWith('/app/api/user') || req.path.startsWith('/app/api/server')) && !req.session.isAdmin) {
+		  return res.sendStatus(403);
+	  }
+		return next();
+	} else {
+		return res.sendStatus(401);
+	}
+}
 
-app.get('/auth/reddit',
-  passport.authenticate('reddit'));
+/* POTENTIAL REFACTOR TO ONE ENDPOINT */
+app.get('/auth/twitter/callback', passport.authenticate('twitter'), authController.twitter);
 
-app.get('/auth/reddit/callback',
-  passport.authenticate('reddit', { failureRedirect: '/login' }),
-  function(req, res) {
-    // Successful authentication, redirect home.
-    res.redirect('/check');
-  });
+app.get('/auth/youtube/callback', passport.authenticate('youtube'), authController.youtube);
 
-passport.use(new TwitterStrategy({
-    consumerKey: 'jHN4Bv29FP2762ZCexnoJpc0S',
-    consumerSecret: '1Q1GYDnjMGWlW6i54W5lURfJj5L4zOVjqOXIW5cXEitwTgKDfd',
-    callbackURL: "http://localhost:3000/auth/twitter/callback"
-  },
-  function(token, tokenSecret, profile, cb) {
-    return cb(null, profile);
-  }
-));
+app.get('/auth/reddit/callback', passport.authenticate('reddit'), authController.reddit);
 
-app.get('/auth/twitter',
-  passport.authenticate('twitter'));
+app.get('/app/api/social-media-socket/:name', async function(req, res, next) {
+	req.session.name = req.params.name
+	req.session.socketId = req.query.socketId;
 
-app.get('/auth/twitter/callback', 
-  passport.authenticate('twitter', { failureRedirect: '/login' }),
-  function(req, res) {
-    // Successful authentication, redirect home.
-    res.redirect('/check');
-  });
+	try {
+		const source = await req.db.collection('graphql_servers').findOne({name: req.params.name});
 
-passport.use(new YoutubeV3Strategy({
-    clientID: '111415140023-kkofs6setf4vceibocq185h8dbsga7b0.apps.googleusercontent.com',
-    clientSecret: 'nUFvsPeihTrf3-4BLAQPr1RP',
-    callbackURL: "http://localhost:3000/auth/youtube/callback",
-    scope: ['https://www.googleapis.com/auth/youtube.readonly']
-  },
-  function(accessToken, refreshToken, profile, done) {
-    return done(null, profile);
-  }
-));
-
-app.get('/auth/youtube',
-  passport.authenticate('twitter'));
-
-app.get('/auth/youtube/callback', 
-  passport.authenticate('youtube', { failureRedirect: '/login' }),
-  function(req, res) {
-    // Successful authentication, redirect home.
-    res.redirect('/check');
+		if (source.slug === 'reddit') {
+			req.session.state = crypto.randomBytes(32).toString('hex');
+			passport.authenticate('reddit', {
+			  state: req.session.state,
+			  duration: 'permanent',
+			})(req, res, next);
+		} else {
+			passport.authenticate(source.slug)(req, res, next)
+		}
+	} catch (err) {
+		// TODO
+	}
   });
 
 app.get('/', function (req, res) {
@@ -138,15 +114,10 @@ app.get('/', function (req, res) {
 	res.send('helllooo!');
 })
 
-app.get('/check', function(req, res) {
-	res.send('working');
-})
-
-
 ////   Authentication Check    ////
-app.post('/app/api/auth/login', function (req, res) {
-	var username = req.body.name;
-	var pass = req.body.password;
+app.post('/app/api/auth/login', async function (req, res) {
+	const email = req.body.email;
+	const password = req.body.password;
 
 	// send error
 	let toSend = {
@@ -154,25 +125,37 @@ app.post('/app/api/auth/login', function (req, res) {
 		error: {}
 	};
 
-	con.query("select * from users where name = " + username, function(err, output) {
-	  	if (err)
+	con.query("select id, email, name, isAdmin, password from users where email = ?", [email], function(err, output) {
+	  	if (err) {
 	  		throw err;
-
+		}
 	  	if (output.length == 0) {
+			console.log("fsdfsdd")
 	  		toSend.error = req.body;
 	  		res.send(toSend);
-	  	} else if (pass == output.password) {
-	  		toSend.data = output;
-	  		res.send(toSend);
-	  	} else {
-	  		toSend.error = req.body;
-	  		res.send(toSend);
-	  	}
+		}
 
+		else {
+			bcrypt.compare(password, output[0].password, function(err, isMatch) {
+				if (err){
+					throw err;
+				}
+				if (isMatch) {
+					output[0].isAdmin = !!parseInt(output[0].isAdmin)
+					toSend.data = {...output[0]};
+					req.session.user_id = output[0].id
+					req.session.isAdmin = output[0].isAdmin 
+					res.send(toSend);
+				} else {
+					toSend.error = req.body;
+					res.send(toSend);
+				}
+				});
+		}
 	  });
 });
 
-app.post('/app/api/auth/register', function (req, res) {
+app.post('/app/api/auth/register', async function (req, res) {
 	var username = req.body.name;
 	var pass = req.body.password;
 	var email_ins = req.body.email;
@@ -183,18 +166,21 @@ app.post('/app/api/auth/register', function (req, res) {
 		error: {}
 	};
 
-	con.query("insert into users(name, email, password, invitationCode) values ('" + username + "', '" + email_ins + "', '" 
-		+ pass + "', " + invCode + ")", function(err, output) {
+	con.query("insert into users(name, email, password, invitationCode) values (?,?,?,?)", 
+			[username, email_ins, await bcrypt.hash(pass, 12), invCode ], function(err, output) {
 	  	if (err) {
 	  		toSend.error = req.body;
 	  		res.send(toSend);
 	  	} else {
-	  		con.query("select email, name, isAdmin from User where name = '" + username + "'", function(err, output) {
+	  		con.query("select id, email, name, isAdmin from users where name = ?", [username], function(err, output) {
 	  			if (err) {
 	  				throw err;
-	  			}
-
-	  			toSend.data = output[0];
+				}
+				
+				output[0].isAdmin = !!parseInt(output[0].isAdmin)
+				toSend.data = {...output[0]};
+				req.session.user_id = output[0].id
+				req.session.isAdmin = output[0].isAdmin 
 	  			res.send(toSend);
 	  		});
 	  	}	  	
@@ -202,242 +188,177 @@ app.post('/app/api/auth/register', function (req, res) {
 	  });
 });
 
-app.get('app/api/auth/logout', function (req, res) {
-	res.sendStatus("Logged out");
+app.get('/app/api/auth/logout', function (req, res) {
+	console.log(req.session);
+	let toSend = {
+		data: '',
+	};
+	req.session.destroy(err => {
+		req.logOut();
+		if (err) {
+			toSend.error = {}
+			toSend.error.generalError = ['Error: Could not logout'];
+			res.send(toSend);
+		} else {
+			toSend.data = "Success logging out";
+			res.send(toSend);
+		}
+	});
 });
 
+// done
+app.get('/app/api/servers', async function (req, res) {
+	//assert.equal(null, err);
 
 
-// REGISTER & LOGIN?
+	//console.log(req.body);
+	let toSend = {
+		data: [],
+		error: {}
+	};
 
-////     graphql_servers table     ////
-/*app.post('/addserver', function (req, res) {
-	client.connect(function(err, client) {
-	  //assert.equal(null, err);
-	  console.log("Connected correctly to server");
-
-	  const db = client.db('listenonline');
-
-	  console.log(req.body);
-
-	  db.collection('graphql_servers').insertOne(req.body, function(err, r) {
-	  		console.log('inserted successfully!');
-	  		//db.close();
-	  		let body = {message: "Success!!"}
-	  		//res.sendStatus(200);
-	  		res.send(body);
-	  });
-
-	});
-});*/
+	try {
+		const result = await req.db.collection('graphql_servers').find({}, {_id: 0, name: 1, url: 1, slug: 1, description: 1, requireAuthentication: 1, requireAuthorization: 1 }).toArray();
+		toSend.data = result;
+		res.send(toSend);
+	} catch (err) {
+		// TODO
+	}
+});
 
 // done
-app.get('/app/api/servers', function (req, res) {
-	client.connect(function(err, client) {
-	  //assert.equal(null, err);
-	  console.log("Connected correctly to server");
+app.put('/app/api/server/update', async function (req, res) {
+	const body = req.body.data;
+	const type = req.body.type;
+	
+	let toSend = {
+		data: {},
+		error: {}
+	};
 
-	  const db = client.db('listenonline');
+	const schema = await get_graphql_data(body.url, introspectionQuery);
 
-	  //console.log(req.body);
-	  let toSend = {
+	try {
+		// ADD
+		if (type === 0) {
+			req.db.collection('graphql_servers').insertOne({_id: await getNextSequenceValue('server_id', req.db), ...body, schema});
+		}
+
+		// DELETE
+		else if (type === 1) {
+			// delete cascade
+			req.db.collection('graphql_servers').deleteOne({"name": body.name});
+		}
+
+		// UPDATE
+		else if (type === 2) {
+			req.db.collection('graphql_servers').updateOne({"name": body.name},{...body, schema});
+		}
+
+		toSend.data = body;
+		res.send(toSend)
+	} catch(err) {
+		// TODO
+	}
+});
+
+app.get('/app/api/server/refresh', async function (req, res) {
+	const name = req.query.name;
+	let toSend = {
+		data: name,
+		error: {}
+	};
+
+	try {
+		const server = await req.db.collection('graphql_servers').findOne({"name": name});
+
+		const new_schema = await get_graphql_data(server.url, introspectionQuery);
+	
+		req.db.collection('graphql_servers').updateOne(  { _id:server._id} , { $set: { schema: new_schema } });
+
+		res.send(toSend);
+	} catch (err) {
+		toSend.error = err;
+		res.send(toSend)
+	}
+});
+
+///   social media platforms    ////
+app.get('/app/api/social-media-platforms', async function (req, res) {
+
+	let toSend = {
 		data: [],
 		error: {}
 	  };
 
+	try {
+		
+		const authorizations = await query('SELECT server_id FROM authorizations WHERE user_id = ?',[req.session.user_id]);
 
-	  db.collection('graphql_servers').find({}).toArray(function(err, r) {
-	  		console.log('returning all servers!');
-	  		//db.close();
-	  		let body = {message: "Success!!"}
-	  		//res.sendStatus(200);
-	  		toSend.data = r;
-	  		res.send(toSend);
-	  });
-
-	});
-
-	/*var toSend = {
-		data: [
-		    {
-		        name: 'reddit',
-		        url: 'http://localhost:50190',
-		        slug: 'reddit',
-		        description: 'reddit sample',
-		        requireAuthentication: true,
-		        requireAuthorization: false
-		    },
-		    {
-		        name: 'github',
-		        url: 'http://localhost:53729',
-		        slug: 'github',
-		        description: 'github sample',
-		        requireAuthentication: false,
-		        requireAuthorization: true
-		    }],
-		error: {}
-	};
-
-	res.send(toSend);*/
-
-
-});
-
-// done
-app.put('/app/api/server/update', function (req, res) {
-
-	var toUpdate = req.body.data;
-	var serverName = toUpdate.name;
-
-	client.connect(function(err, client) {
-	  console.log("Connected correctly to server");
-
-	  const db = client.db('listenonline');
-
-	  console.log(toUpdate);
-
-	  let toSend = {
-		data: {},
-		error: {}
-	  };
-
-	  db.collection('graphql_servers').replaceOne({name:serverName}, toUpdate, function(err, res) {
-	    if (err) {
-	    	toSend.error = toUpdate;
-	    	res.send(toSend);
-	    } else {
-	    	toSend.data = toUpdate;
-	    	res.send(toSend);
-	    }
-	  });
-	});
-});
-
-///   social media platforms    ////
-app.get('/app/api/social-media-platforms', function (req, res) {
-
-	let toSend = {
-		data: {},
-		error: {}
-	  };
-	client.connect(function(err, client) {
-	  //assert.equal(null, err);
-	  console.log("Connected correctly to server");
-
-	  const db = client.db('listenonline');
-
-	  //console.log(req.body);
-	  let platforms = [];
-
-	  db.collection('graphql_servers').find({}).toArray(function(err, r) {
-	  		console.log('returning all servers!');
-	  		//db.close();
-	  		let body = {message: "Success!!"};
-	  		//res.sendStatus(200);
-	  		var i = 0;
-	  		for (i = 0; i < r.length; i++) {
-	  			platforms.push(r[i].slug);
-	  		}
-	  		//res.sendStatus(200);
-	  		//res.send(platforms);
-	  		toSend.data = platforms;
-	  		res.send(toSend);
-	  });
-
-	});
-
-
-	/*var toSend = {
-		data: [
-			{
-		        name: 'Reddit',
-		        authURL: '/',
-		        imageURL: '/brand_logos/Reddit_Mark_OnWhite.png',
-		        isAuthenticated: true
-		    },
-		    {
-		        name: 'GitHub',
-		        authURL: '/',
-		        imageURL: '/brand_logos/GitHub-Mark-120px-plus.png',
-		        isAuthenticated: false
-		    },
-		    {
-		        name: 'Twitter',
-		        authURL: '/',
-		        imageURL: '/brand_logos/Twitter_Logo_Blue.png',
-		        isAuthenticated: true
-		    },
-		    {
-		        name: 'YouTube',
-		        authURL: '/',
-		        imageURL: '/brand_logos/yt_logo_rgb_light.png',
-		        isAuthenticated: false
-		    }
-		],
-		error: {}
-	};
-
-	res.send(toSend);*/
+		const servers = await req.db.collection('graphql_servers').find({}).toArray();
+		servers.forEach(server => {
+			toSend.data.push({
+				name: server.name,
+				imageURL: '',
+				isAuthenticated: authorizations.some(auth => auth.server_id === server._id)
+			})
+		})
+		
+		res.send(toSend);
+	} catch (err) {
+		// TODO
+	}
 });
 
 
 
 ////     queries table     ////
 // done
-app.get('/app/api/queries', function (req, res) {
+app.get('/app/api/queries', async function (req, res) {
 	let toSend = {
 		data: [],
 		error: {}
 	  };
-	con.query("select * from queries", function(err, output) {
-	  	if (err)
-	  		throw err;
 
-	  	toSend.data = output;
-	  	res.send(toSend);
-	  });
+	try {
+		const queries = await req.db.collection('queries').find({}, {_id: 0, name: 1, source: 1, schedule: 1, schema: 1}).toArray();
+		toSend.data = queries;
+		res.send(toSend);
+
+	} catch (err) {
+		// TODO
+	}
 });
 
-// returning all slugs
-app.get('/app/api/query/sources', function (req, res) {
+app.get('/app/api/query/sources', async function (req, res) {
 	let toSend = {
 		data: [],
 		error: {}
-	  };
-	db.collection('graphql_servers').find({}).toArray(function(err, r) {
-	  		//console.log('returning all servers!');
-	  		//db.close();
-	  		let body = {message: "Success!!"};
-	  		//res.sendStatus(200);
-	  		var i = 0;
-	  		let platforms = [];
-	  		for (i = 0; i < r.length; i++) {
-	  			platforms.push(r[i].slug);
-	  		}
-	  		//res.sendStatus(200);
+	};
 
-	  		toSend.data = platforms;
-	  		res.send(toSend);
-	  });
-
-
-	/**/
-
+	try {
+		const sources = await req.db.collection('graphql_servers').find({}, {_id: 0, name: 1}).toArray();
+		toSend.data = sources.map(source => source.name);
+		res.send(toSend);
+	} catch(err) {
+		// TODO
+	}
 });
 
-// correct
-app.get('/app/api/query/full-schema', function (req, res) {
-	let toSend = {
-		data: {},
-		error: {}
-	  };
-	con.query("select structure from queries limit 1", function(err, output) {
-	  	if (err)
-	  		throw err;
+app.get('/app/api/query/full-schema', async function (req, res) {
+	const source = req.query.source;
 
-	  	toSend.data = output;
-	  	res.send(toSend);
-	  });
+	let toSend = {
+		data: {}
+	  };
+
+	try {
+		const result = await req.db.collection('graphql_servers').findOne({name: source}, {_id: 0, schema: 1});
+		toSend.data = result.schema;
+		res.send(toSend);
+	} catch(err) {
+		// TODO
+	}
 });
 
 
@@ -446,7 +367,7 @@ function toGraphQLQueryString(result, node) {
 
 	if (result.length > 0) {
 		result += "{";
-		inputs.forEach((input, index, inputs) => {
+		node.inputs.forEach((input, index, inputs) => {
 			if (input.inputType == 'String') {
 				if (input.value) {
 					result += input.name + ":" + (input.value ? JSON.stringify(input.value) : '""');
@@ -465,10 +386,10 @@ function toGraphQLQueryString(result, node) {
 		result += ") ";
 	}
 
-	if (children.length > 0) {
+	if (node.children.length > 0) {
 		result += "{";
 
-		children.forEach((child) => {
+		node.children.forEach((child) => {
 			if (child.selected) {
 				result += toGraphQLQueryString(result + child.name + " ", child);
 			}
@@ -482,630 +403,255 @@ function toGraphQLQueryString(result, node) {
 
 
 /////   *******    /////
-app.put('/app/api/query/update',  function (req, res) {
+app.put('/app/api/query/update',  async function (req, res) {
+	const query = req.body.data;
+	const type = req.body.type;
+
 	let toSend = {
 		data: {},
+	  };
+
+	try {
+		const {_id, url} = await req.db.collection('graphql_servers').findOne({name: query.source}, {url: 1})
+		const server_id = _id
+
+		// ADD
+		if (type === 0) {
+			req.db.collection('queries').insertOne({...query, server_id , user_id: req.session.user_id})
+		}
+
+		// DELETE
+		else if (type === 1) {
+			// TODO
+		}
+
+		// EXECUTE
+		else if (type === 2) {
+
+			const data = {
+				variables: null,
+				query: '{ popular { data { children { data { title } } } } }',
+			};
+
+			const result = await fetch(url, {
+				method: 'POST',
+				body: JSON.stringify(data),
+				headers: {
+					'Content-Type': 'application/json',
+				},
+			})
+
+			const json = await result.json();
+
+			const timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+			req.db.collection('query_histories').insertOne({query_name: query.name, executionTimestamp: timestamp, runtime: 1000, data: json, user_id: req.session.user_id})
+		}
+
+		toSend.data = query;
+		res.send(toSend);
+	} catch (err) {
+		console.log(err);
+	}
+
+	// let param = req.body;
+	// if (param.type == 0) {
+	// 	let toInsert = param.data;
+	// 	let serv_id = 0;
+	// 	if (toInsert.source == 'reddit') {
+	// 		serv_id = 1;
+	// 	} else if (toInsert.source == 'twitter') {
+	// 		serv_id = 3;
+	// 	} else if (toInsert.source == 'github') {
+	// 		serv_id = 2;
+	// 	}
+	// 	con.query("insert into queries(name, schedule, user_id, server_id) values ('" + toInsert.name + "', " + toInsert.schedule + ", 1, " + serv_id + ")"
+	// 		, function(err, output) {
+	// 	  	if (err)
+	// 	  		throw err;
+
+	// 	  	//res.send("values successfully inserted!");
+
+	// 	  	con.query("select * from queries", function (error, result) {
+	// 	  		if (error) {
+	// 	  			throw error;
+	// 	  		}
+
+	// 	  		toSend.data = result;
+	// 	  		res.send(toSend);
+	// 	  	});
+		 
+	// 	  });
+	// } else if (param.type == 1) {
+	// 	con.query("delete from queries where name = '" + param.data.name + "'", function(err, output) {
+	// 	  	if (err)
+	// 	  		throw err;
+
+	// 	  	con.query("select * from queries", function (error, result) {
+	// 	  		if (error) {
+	// 	  			throw error;
+	// 	  		}
+
+	// 	  		toSend.data = result;
+	// 	  		res.send(toSend);
+	// 	  	});
+	// 	  });
+	// } else if (param.type == 2) {
+		
+	// 	/*let rawdata = fs.readFileSync('fakeQuery.json');
+	// 	let queryJson = JSON.parse(rawdata);
+	// 	console.log(queryJson);
+
+	// 	let querynode = new QueryNode(queryJson.name, queryJson.inputs, queryJson.output, queryJson.children, queryJson.selected);
+	// 	let gql_string = querynode.toGraphQLQueryString();
+	// 	console.log(gql_string);*/
+
+	// 	console.log(req.body.data)
+
+	// 	const data = {
+	//       variables: null,
+	//       query: '{ top (subreddit: "uiuc") { data { children { data { title } } } } }',
+	//     };
+
+	//     fetch('http://localhost:4000/', {
+	//       method: 'POST',
+	//       body: JSON.stringify(data),
+	//       headers: {
+	//         'Content-Type': 'application/json',
+	//       },
+	//     }).then((response) => response.json())
+	//     .then((result) => {
+	//     	console.log(result);
+	//     	res.send(result);
+	//     })
+	// }
+});
+
+////     query_histories table     ////
+app.get('/app/api/query/history-records', async function (req, res) {
+	let qName = req.query.queryName;
+	let toSend = {
+		data: [],
 		error: {}
 	  };
 
-	let param = req.body;
-	if (param.type == 0) {
-		let toInsert = param.data;
-		let serv_id = 0;
-		if (toInsert.source == 'reddit') {
-			serv_id = 1;
-		} else if (toInsert.source == 'twitter') {
-			serv_id = 3;
-		} else if (toInsert.source == 'github') {
-			serv_id = 2;
-		}
-		con.query("insert into queries(name, schedule, user_id, server_id) values ('" + toInsert.name + "', " + toInsert.schedule + ", 1, " + serv_id + ")"
-			, function(err, output) {
-		  	if (err)
-		  		throw err;
-
-		  	//res.send("values successfully inserted!");
-
-		  	con.query("select * from queries", function (error, result) {
-		  		if (error) {
-		  			throw error;
-		  		}
-
-		  		toSend.data = result;
-		  		res.send(toSend);
-		  	});
-		 
-		  });
-	} else if (param.type == 1) {
-		con.query("delete from queries where name = '" + param.data.name + "'", function(err, output) {
-		  	if (err)
-		  		throw err;
-
-		  	con.query("select * from queries", function (error, result) {
-		  		if (error) {
-		  			throw error;
-		  		}
-
-		  		toSend.data = result;
-		  		res.send(toSend);
-		  	});
-		  });
-	} else if (param.type == 2) {
-		
-		/*let rawdata = fs.readFileSync('fakeQuery.json');
-		let queryJson = JSON.parse(rawdata);
-		console.log(queryJson);
-
-		let querynode = new QueryNode(queryJson.name, queryJson.inputs, queryJson.output, queryJson.children, queryJson.selected);
-		let gql_string = querynode.toGraphQLQueryString();
-		console.log(gql_string);*/
-
-
-
-		const data = {
-	      variables: null,
-	      query: '{ top (subreddit: "uiuc") { data { children { data { title } } } } }',
-	    };
-
-	    fetch('http://localhost:4000/', {
-	      method: 'POST',
-	      body: JSON.stringify(data),
-	      headers: {
-	        'Content-Type': 'application/json',
-	      },
-	    }).then((response) => response.json())
-	    .then((result) => {
-	    	console.log(result);
-	    	res.send(result);
-	    })
+	try {
+		const history = await req.db.collection('query_histories').find({query_name: qName, user_id: req.session.user_id}, {_id: 0, executionTimestamp: 1, runtime: 1, data: 1}).toArray()
+		toSend.data = history;
+		res.send(toSend)
+	} catch (err) {
+		// TODO
+		console.log(err);
 	}
-
-	/*const QuerySchedule = {
-		AD_HOC: 0,
-		PER_DAY: 1
-	}
-
-
-	var toSend = {
-		data: [
-			{
-		        name: 'tetris',
-		        source: 'Reddit',
-		        schedule: QuerySchedule.AD_HOC,
-		        schema: fakeGitHubQuery
-		    }, {
-		        name: 'ball',
-		        source: 'Twitter',
-		        schedule: QuerySchedule.PER_DAY,
-		        schema: fakeGitHubQuery
-		    }
-		],
-		error: {}
-	};
-
-	res.send(toSend);*/
-
-
-});
-
-/*app.get('/query/selected-schema', function (req, res) {
-	con.query("select structure from queries where name = " + req.query.source, function(err, output) {
-	  	if (err)
-	  		throw err;
-
-	  	res.send(output);
-	  });
-});*/
-
-
-
-
-////     query_histories table     ////
-app.get('/app/api/query/history-records', function (req, res) {
-	let qName = req.body.queryName;
-	let toSend = [{
-		data: {},
-		runtime: {},
-		executionTimestamp: {}
-	  }];
-	client.connect(function(err, client) {
-	  //assert.equal(null, err);
-	  console.log("Connected correctly to server");
-
-	  const db = client.db('listenonline');
-
-	  console.log(req.body);
-
-	  db.collection('query_histories').find({name:qName}).toArray(function(err, r) {
-	  		console.log('inserted successfully!');
-	  		//client.close();
-	  		let body = {message: "Success!!"}
-	  		//res.sendStatus(200);
-
-	  		for (let i = 0; i < r.length; i = i + 1) {
-
-	  		}
-	  		res.send();
-	  });
-
-	});
-
-	/*var fakeGitHubQueryResponse = fs.readFileSync('fakeGithubQuery.json');
-
-	var toSend = {
-		data: [
-			{
-		        executionTimestamp: '2020-01-31 02:23:32',
-		        runtime: 1009,
-		        data: fakeGitHubQueryResponse
-		    }, {
-		        executionTimestamp: '2020-01-31 02:21:22',
-		        runtime: 1576,
-		        data: fakeGitHubQueryResponse
-		    }, {
-		        executionTimestamp: '2020-01-31 02:13:35',
-		        runtime: 222,
-		        data: fakeGitHubQueryResponse
-		    }, {
-		        executionTimestamp: '2020-01-31 02:23:32',
-		        runtime: 1009,
-		        data: fakeGitHubQueryResponse
-		    }
-		]
-	};
-
-	res.send(toSend);*/
-
 });
 
 
 ////     users table     ////
 // done
-app.get('/app/api/users', function (req, res) {
-	client.connect(function(err, client) {
-	  //assert.equal(null, err);
-	  console.log("Connected correctly to server");
+app.get('/app/api/users', async function (req, res) {
 
-	  const db = client.db('listenonline');
-	  let toSend = {
+	let toSend = {
 		data: [],
 		error: {}
 	  };
-	  db.collection('users').find({}, {name:1, isAdmin:1, email:1, quota:1, usedQuota:1}).toArray(function(err, r) {
-	  		console.log('returning all users!');
-	  		toSend.data = r;
-	  		res.send(toSend);
-	  });
 
-	});
+	try {
+		const users = await query('SELECT name, isAdmin, email, quota FROM users');
 
-	/*
-	var toSend = {
-		data: [
-			{name: `Start from App`, isAdmin: true, email: `user1@email.com`, quota: 1, usedQuota: 0.5}
-		],
+		toSend.data = users.map(user => ({ ...user, usedQuota: 0 }));
+		res.send(toSend);
+	} catch (err) {
+		// TODO
+	}
+});
+
+app.put('/app/api/user/update', function (req, res) {
+
+	const toUpdate = req.body.data;
+	const type = req.body.type;
+
+	let toSend = {
+		data: [],
 		error: {}
 	};
 
-	res.send(toSend);
-	*/
-});
-
-/*
-app.post('/adduser', function (req, res) {
-	client.connect(function(err, client) {
-	  //assert.equal(null, err);
-	  console.log("Connected correctly to server");
-
-	  const db = client.db('listenonline');
-
-	  console.log(req.body);
-
-	  db.collection('users').insertOne(req.body, function(err, r) {
-	  		console.log('inserted successfully!');
-	  		let body = {message: "Success!!"}
-	  		//res.sendStatus(200);
-	  		res.send(body);
-	  });
-
-	});
-});*/
-// done 1
-app.put('/app/api/user/update', function (req, res) {
-
-	var toUpdate = req.body.data;
-
-	let toSend = {
-			data: [],
-			error: {}
-		  };
-
-	if (toUpdate.type == 0) {
-		con.query("delete from users where name = " + toUpdate.name, function(err, output) {
-		  	if (err) {
-		  		toSend.error = {quota: toUpdate.quota};
-		  		res.send(toSend);
-		  	}
-
-		  });
-
-		con.query("select * from users ", function(err, output) {
-		  	if (err) {
-		  		toSend.error = {quota: toUpdate.quota};
-		  		res.send(toSend);
-		  	} else {
-		  		toSend.data = output;
-		  		res.send(toSend);
-		  	}
-		  });		
-
-	} else if (toUpdate.type == 1) {
-		con.query("update users set name = " + toUpdate.name + ", email = '" + toUpdate.email + 
-			"', isAdmin = " + toUpdate.isAdmin + ", quota = " + toUpdate.quota + ", usedQuota = " + toUpdate.usedQuota, function(err, output) {
-		  	if (err){
-		  		toSend.error = {quota: toUpdate.quota};
-		  		res.send(toSend);
-		  	}
-
-		  });
-
+	try {
+		// DELETE
+		if (type == 0) {
+			// emails are unique
+			query("delete from users where email = ?", [toUpdate.name, toUpdate. email]);
+			
+		} 
 		
-		con.query("select * from users ", function(err, output) {
-		  	if (err) {
-		  		toSend.error = {quota: toUpdate.quota};
-		  		res.send(toSend);
-		  	} else {
-		  		toSend.data = output;
-		  		res.send(toSend);
-		  	}
-
-		  });
+		// UPDATE
+		else if (type == 1) {
+			// emails are unique
+			query("update users set isAdmin = ?, quota = ? WHERE email = ?", 
+					[toUpdate.isAdmin, toUpdate.quota, toUpdate.name, toUpdate.email])
+		}
+		toSend.data = toUpdate;
+		res.send(toSend);
+	} catch (err) {
+		// TODO
 	}
+
+
 });
 
 
 ////     applications table     ////
 // done 1
-app.get('/app/api/applications', function (req, res) {
+app.get('/app/api/applications', async function (req, res) {
 	let toSend = {
 		data: [],
-		error: {}
-	};
-	con.query("select * from applications", function(err, output) {
-	  	if (err) {
-	  		throw err;
-	  	} else {
-	  		toSend.data = output;
-	  		res.send(toSend);
-	  	}
-	  });
-	
-	/*
-	  var toSend = {
-		data: [
-			{
-		        name: 'xxx', callbackURL: 'www.google.com', home: 'anything'
-		    }
-		],
-		error: {}
-	  };
-
-	  res.send(toSend);
-	  */
-
-});
-
-// done 1
-app.put('/app/api/application/update', function (req, res) {
-	var toUpdate = req.body;
-
-	let toSend = {
-		data: [],
-		error: {}
 	};
 
-	var updatebody = toUpdate.data;
-	if (toUpdate.type == 1) {
-		con.query('delete from applications where name = toSend.data.name', function(err, output) {
-		  	if (err) {
-		  		let errObj = {
-		  			fieldError: {
-		  				callbackURL: updatebody.callbackURL,
-		  				home: updatebody.home,
-		  				name: updatebody.name
-		  			}
-		  		}
-		  		res.send(toSend);
-		  	} else {
-		  		con.query("select * from applications", function(err, output) {
-				  	if (err) {
-				  		let errObj = {
-				  			fieldError: {
-				  				callbackURL: updatebody.callbackURL,
-				  				home: updatebody.home,
-				  				name: updatebody.name
-				  			}
-				  		}
-				  		res.send(toSend);
-				  	} else {
-				  		toSend.data = output;
-				  		res.send(toSend);
-				  	}
-				});
-		  	}
-
-	  });
-	} else if (toUpdate.type == 2) {
-		con.query('insert into applications(callback_url, home, name, description, user_id) values (' + toUpdate.callbackURL,
-			+ ', ' + toUpdate.home + ', ' + toUpdate.name + 
-			', ' + toUpdate.description + ', ' + toUpdate.user_id + ')', function(err, output) {
-			  	if (err) {
-			  		let errObj = {
-				  			fieldError: {
-				  				callbackURL: updatebody.callbackURL,
-				  				home: updatebody.home,
-				  				name: updatebody.name
-				  			}
-				  		}
-				  		res.send(toSend);
-			  	} else {
-			  		con.query("select * from applications", function(err, output) {
-					  	if (err) {
-					  		let errObj = {
-					  			fieldError: {
-					  				callbackURL: updatebody.callbackURL,
-					  				home: updatebody.home,
-					  				name: updatebody.name
-					  			}
-					  		}
-					  		res.send(toSend);
-					  	} else {
-					  		toSend.data = output;
-					  		res.send(toSend);
-					  	}
-					});
-			  	}
-	  });
-
-	} else if (toUpdate.type == 0) {
-		con.query('update applications set callback_url = ' + toUpdate.callback_url + ', home = ' + toUpdate.home + ', name = ' + toUpdate.name + 
-	', description = ' + toUpdate.description + ', user_id = ' + toUpdate.user_id, function(err, output) {
-	  	if (err) {
-	  		let errObj = {
-				  			fieldError: {
-				  				callbackURL: updatebody.callbackURL,
-				  				home: updatebody.home,
-				  				name: updatebody.name
-				  			}
-				  		}
-				  		toSend.error = errObj;
-				  		res.send(toSend);
-	  	} else {
-			  		con.query("select * from applications", function(err, output) {
-					  	if (err) {
-					  		let errObj = {
-					  			fieldError: {
-					  				callbackURL: updatebody.callbackURL,
-					  				home: updatebody.home,
-					  				name: updatebody.name
-					  			}
-					  		}
-					  		toSend.error = errObj;
-					  		res.send(toSend);
-					  	} else {
-					  		toSend.data = output;
-					  		res.send(toSend);
-					  	}
-					});
-			  	}
-	  });
+	try {
+		const result = await query("select callback_url as callbackURL, home, name, description, cast(id as char) as id from applications WHERE user_id = ?",[req.session.user_id]);
+		toSend.data = result
+		res.send(toSend)
+	} catch (err) {
+		// TODO
 	}
 });
 
+// done 1
+app.put('/app/api/application/update', async function (req, res) {
+	const toUpdate = req.body.data;
+	const type = req.body.type;
 
-/*
+	let toSend = {
+		data: {},
+	};
 
-app.post('/insertquery', function (req, res) {
-	var toSend = req.body;
-	var sql = 'insert into queries values (' + toSend.id + ',' + toSend.created_at + ','
-	 + toSend.updated_at + ',' + toSend.name + ',' + toSend.schedule + ',' + toSend.structure + ',' + toSend.description
-	  + ',' + toSend.user_id + ',' + toSend.server_id + ')';
-	con.query(sql, function(err, output) {
-	  	if (err)
-	  		throw err;
-	  	res.send(output);
-	  });
+	try {
+		// UPDATE
+		if (type === 0) {
+			query("update applications set name = ?, callback_url = ?, home = ?, description = ? WHERE id = ?", 
+			[toUpdate.name, toUpdate.callbackURL, toUpdate.home, toUpdate.description, parseInt(toUpdate.id)])
+		} 
+		
+		// DELETE
+		else if (type === 1) {
+			await query("delete from applications where id = ?", 
+			[parseInt(toUpdate.id)]);
+		} 
+		
+		// CREATE
+		else if (type === 2) {
+			const result = await query('insert into applications(name, callback_url, home, description, user_id) values (?,?,?,?,?)', 
+			[toUpdate.name, toUpdate.callbackURL, toUpdate.home, toUpdate.description, req.session.user_id]);
+
+			toUpdate.id = result.insertId.toString()
+		}
+
+		toSend.data = toUpdate;
+		res.send(toSend);
+
+	} catch(err) {
+		console.log(err);
+	}
+
 });
-
-////     runs table     ////
-app.get('/getruns', function (req, res) {
-	con.query("select * from runs", function(err, output) {
-	  	if (err)
-	  		throw err;
-
-	  	res.send(output);
-	  });
-});
-
-//
-app.post('/addRun', function (req, res) {
-	var toSend = req.body;
-	var sql = 'insert into runs values (' + toSend.id + ',' + toSend.created_at + ','
-	 + toSend.updated_at + ',' + toSend.meta_query_id + ',' + toSend.topology + ')';
-	con.query(sql, function(err, output) {
-	  	if (err)
-	  		throw err;
-	  	res.send(output);
-	  });
-});
-
-
-////     authorizations table     ////
-app.get('/getallauthorizations', function (req, res) {
-	con.query("select * from authorizations", function(err, output) {
-	  	if (err)
-	  		throw err;
-
-	  	res.send(output);
-	  });
-});
-
-app.get('/getauthorization', function (req, res) {
-	con.query("select * from authorizations where server_id = " + req.query.serverId, function(err, output) {
-	  	if (err)
-	  		throw err;
-	  	
-	  	res.send(output);
-	  });
-});
-
-//
-app.post('/addauthorization', function (req, res) {
-	var toSend = req.body;
-	var sql = 'insert into authorizations values (' + toSend.id + ',' + toSend.created_at + ','
-	 + toSend.updated_at + ',' + toSend.access_token + ',' + toSend.refresh_token + ',' + toSend.meta
-	  + ',' + toSend.user_id + ',' + toSend.server_id + ')';
-	con.query(sql, function(err, output) {
-	  	if (err)
-	  		throw err;
-	  	res.send(output);
-	  });
-});
-
-
-
-
-
-////     failed_jobs table     ////
-app.get('/getallfailedjobs', function (req, res) {
-	con.query("select * from failed_jobs", function(err, output) {
-	  	if (err)
-	  		throw err;
-
-	  	res.send(output);
-	  });
-});
-
-//
-app.post('/addfailedjob', function (req, res) {
-	var toSend = req.body;
-	var sql = 'insert into failed_jobs values (' + toSend.id + ',' + toSend.connection + ','
-	 + toSend.queue + ',' + toSend.payload + ',' + toSend.exception + ',' + toSend.failed_at + ')';
-	con.query(sql, function(err, output) {
-	  	if (err)
-	  		throw err;
-	  	res.send(output);
-	  });
-});
-
-
-////     interested_parties table     ////
-app.get('/getallinterestedparties', function (req, res) {
-	
-	con.query("select * from interested_parties", function(err, output) {
-	  	if (err)
-	  		throw err;
-
-	  	res.send(output);
-	  });
-});
-
-//
-app.post('/addinterestedparty', function (req, res) {
-	var toSend = req.body;
-	var sql = 'insert into interested_parties values (' + toSend.id + ',' + toSend.created_at + ','
-	 + toSend.updated_at + ',' + toSend.email + ',' + toSend.name + ',' + toSend.about + ')';
-	con.query(sql, function(err, output) {
-	  	if (err)
-	  		throw err;
-	  	res.send(output);
-	  });
-});
-
-
-////     jobs table     ////
-app.get('/getalljobs', function (req, res) {
-	con.query("select * from jobs", function(err, output) {
-	  	if (err)
-	  		throw err;
-
-	  	res.send(output);
-	  });
-});
-
-//
-app.post('/addnewjob', function (req, res) {
-	var toSend = req.body;
-	var sql = 'insert into jobs values (' + toSend.id + ',' + toSend.queue + ','
-	 + toSend.payload + ',' + toSend.attempts + ',' + toSend.reserved_at + ',' + toSend.available_at + ',' + toSend.created_at + ')';
-	con.query(sql, function(err, output) {
-	  	if (err)
-	  		throw err;
-	  	res.send(output);
-	  });
-});
-
-////     migrations table     ////
-app.get('/getallmigrations', function (req, res) {
-	con.query("select * from migrations", function(err, output) {
-	  	if (err)
-	  		throw err;
-
-	  	res.send(output);
-	  });
-});
-
-app.get('/getmigration', function (req, res) {
-	con.query("select * from migrations where id = " + req.query.id, function(err, output) {
-	  	if (err)
-	  		throw err;
-	  	
-	  	res.send(output);
-	  });
-});
-
-//
-app.post('/addmigration', function (req, res) {
-	var toSend = req.body;
-	var sql = 'insert into migrations values (' + toSend.id + ',' + toSend.migration + ','
-	 + toSend.batch + ')';
-	con.query(sql, function(err, output) {
-	  	if (err)
-	  		throw err;
-	  	res.send(output);
-	  });
-});
-
-
-////     stages table     ////
-app.get('/getallstages', function (req, res) {
-	con.query("select * from stages", function(err, output) {
-	  	if (err)
-	  		throw err;
-
-	  	res.send(output);
-	  });
-});
-
-app.get('/getstage', function (req, res) {
-	con.query("select * from stages where run_id = " + req.query.runId, function(err, output) {
-	  	if (err)
-	  		throw err;
-	  	
-	  	res.send(output);
-	  });
-});
-
-app.post('/addStage', function (req, res) {
-	var toSend = req.body;
-	var sql = 'insert into stages values (' + toSend.id + ',' + toSend.created_at + ','
-	 + toSend.updated_at + ',' + toSend.run_id + ')';
-	con.query(sql, function(err, output) {
-	  	if (err)
-	  		throw err;
-	  	res.send(output);
-	  });
-});*/
 
 var server = app.listen(3000, function () {
    var host = server.address().address
@@ -1113,6 +659,9 @@ var server = app.listen(3000, function () {
    
    console.log("Example app listening at http://%s:%s", host, port)
 });
+
+const io = socketio(server)
+app.set('io', io)
 
 module.exports = server;
 

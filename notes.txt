@@ -1,0 +1,14 @@
+- application and query uuids, assume application and query names will be unique?
+    - can enforce unique names from backend (throw error if name exists already)
+- full-schema causing crash
+
+
+
+remaining work:
+    - add endpoints for swagger files and translation file management in the backend
+    - testing
+    - implement and test toGraphQLstring function
+    - error handling in backend
+    - refresh token and access token management
+
+

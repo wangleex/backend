@@ -1,0 +1,2420 @@
+{
+    "data": {
+        "data": {
+            "__schema": {
+                "queryType": {
+                    "name": "Query"
+                },
+                "mutationType": null,
+                "subscriptionType": null,
+                "types": [
+                    {
+                        "kind": "OBJECT",
+                        "name": "Query",
+                        "description": "The start of any query",
+                        "fields": [
+                            {
+                                "name": "search",
+                                "description": "Returns a collection of search results that match the query parameters specified in the API request. By default, a search result set identifies matching video, channel, and playlist resources, but you can also configure queries to only retrieve a specific type of resource.\n\nEquivalent to GET /search",
+                                "args": [
+                                    {
+                                        "name": "alt",
+                                        "description": "Data format for the response.",
+                                        "type": {
+                                            "kind": "ENUM",
+                                            "name": "Alt",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "channelId",
+                                        "description": "The channelId parameter indicates that the API response should only contain resources created by the channel",
+                                        "type": {
+                                            "kind": "SCALAR",
+                                            "name": "String",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "channelType",
+                                        "description": "The channelType parameter lets you restrict a search to a particular type of channel.",
+                                        "type": {
+                                            "kind": "ENUM",
+                                            "name": "ChannelType",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "eventType",
+                                        "description": "The eventType parameter restricts a search to broadcast events. If you specify a value for this parameter, you must also set the type parameter's value to video.",
+                                        "type": {
+                                            "kind": "ENUM",
+                                            "name": "EventType",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "fields",
+                                        "description": "Selector specifying which fields to include in a partial response.",
+                                        "type": {
+                                            "kind": "SCALAR",
+                                            "name": "String",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "forContentOwner",
+                                        "description": "Note: This parameter is intended exclusively for YouTube content partners.\n\nThe forContentOwner parameter restricts the search to only retrieve resources owned by the content owner specified by the onBehalfOfContentOwner parameter. The user must be authenticated using a CMS account linked to the specified content owner and onBehalfOfContentOwner must be provided.",
+                                        "type": {
+                                            "kind": "SCALAR",
+                                            "name": "Boolean",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "forDeveloper",
+                                        "description": "The forDeveloper parameter restricts the search to only retrieve videos uploaded via the developer's application or website. The API server uses the request's authorization credentials to identify the developer. Therefore, a developer can restrict results to videos uploaded through the developer's own app or website but not to videos uploaded through other apps or sites.",
+                                        "type": {
+                                            "kind": "SCALAR",
+                                            "name": "Boolean",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "forMine",
+                                        "description": "The forMine parameter restricts the search to only retrieve videos owned by the authenticated user. If you set this parameter to true, then the type parameter's value must also be set to video.",
+                                        "type": {
+                                            "kind": "SCALAR",
+                                            "name": "Boolean",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "key",
+                                        "description": "API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.",
+                                        "type": {
+                                            "kind": "SCALAR",
+                                            "name": "String",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "location",
+                                        "description": "The location parameter, in conjunction with the locationRadius parameter, defines a circular geographic area and also restricts a search to videos that specify, in their metadata, a geographic location that falls within that area. The parameter value is a string that specifies latitude/longitude coordinates e.g. (37.42307,-122.08427).\n\n\n- The location parameter value identifies the point at the center of the area.\n- The locationRadius parameter specifies the maximum distance that the location associated with a video can be from that point for the video to still be included in the search results.The API returns an error if your request specifies a value for the location parameter but does not also specify a value for the locationRadius parameter.",
+                                        "type": {
+                                            "kind": "SCALAR",
+                                            "name": "String",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "locationRadius",
+                                        "description": "The locationRadius parameter, in conjunction with the location parameter, defines a circular geographic area.\n\nThe parameter value must be a floating point number followed by a measurement unit. Valid measurement units are m, km, ft, and mi. For example, valid parameter values include 1500m, 5km, 10000ft, and 0.75mi. The API does not support locationRadius parameter values larger than 1000 kilometers.\n\nNote: See the definition of the location parameter for more information.",
+                                        "type": {
+                                            "kind": "SCALAR",
+                                            "name": "String",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "maxResults",
+                                        "description": "The maxResults parameter specifies the maximum number of items that should be returned in the result set.",
+                                        "type": {
+                                            "kind": "SCALAR",
+                                            "name": "Int",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "oauthToken",
+                                        "description": "OAuth 2.0 token for the current user.",
+                                        "type": {
+                                            "kind": "SCALAR",
+                                            "name": "String",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "onBehalfOfContentOwner",
+                                        "description": "Note: This parameter is intended exclusively for YouTube content partners.\n\nThe onBehalfOfContentOwner parameter indicates that the request's authorization credentials identify a YouTube CMS user who is acting on behalf of the content owner specified in the parameter value. This parameter is intended for YouTube content partners that own and manage many different YouTube channels. It allows content owners to authenticate once and get access to all their video and channel data, without having to provide authentication credentials for each individual channel. The CMS account that the user authenticates with must be linked to the specified YouTube content owner.",
+                                        "type": {
+                                            "kind": "SCALAR",
+                                            "name": "String",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "order",
+                                        "description": "The order parameter specifies the method that will be used to order resources in the API response.",
+                                        "type": {
+                                            "kind": "ENUM",
+                                            "name": "Order",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "pageToken",
+                                        "description": "The pageToken parameter identifies a specific page in the result set that should be returned. In an API response, the nextPageToken and prevPageToken properties identify other pages that could be retrieved.",
+                                        "type": {
+                                            "kind": "SCALAR",
+                                            "name": "String",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "part",
+                                        "description": "The part parameter specifies a comma-separated list of one or more search resource properties that the API response will include. Set the parameter value to snippet.",
+                                        "type": {
+                                            "kind": "NON_NULL",
+                                            "name": null,
+                                            "ofType": {
+                                                "kind": "SCALAR",
+                                                "name": "String",
+                                                "ofType": null
+                                            }
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "prettyPrint",
+                                        "description": "Returns response with indentations and line breaks.",
+                                        "type": {
+                                            "kind": "SCALAR",
+                                            "name": "Boolean",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "publishedAfter",
+                                        "description": "The publishedAfter parameter indicates that the API response should only contain resources created after the specified time. The value is an RFC 3339 formatted date-time value (1970-01-01T00:00:00Z).",
+                                        "type": {
+                                            "kind": "SCALAR",
+                                            "name": "String",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "publishedBefore",
+                                        "description": "The publishedBefore parameter indicates that the API response should only contain resources created before the specified time. The value is an RFC 3339 formatted date-time value (1970-01-01T00:00:00Z).",
+                                        "type": {
+                                            "kind": "SCALAR",
+                                            "name": "String",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "q",
+                                        "description": "The q parameter specifies the query term to search for.\n\nYour request can also use the Boolean NOT (-) and OR (|) operators to exclude videos or to find videos that are associated with one of several search terms. For example, to search for videos matching either \"boating\" or \"sailing\", set the q parameter value to boating|sailing. Similarly, to search for videos matching either \"boating\" or \"sailing\" but not \"fishing\", set the q parameter value to boating|sailing -fishing. Note that the pipe character must be URL-escaped when it is sent in your API request. The URL-escaped value for the pipe character is %7C.",
+                                        "type": {
+                                            "kind": "SCALAR",
+                                            "name": "String",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "quotaUser",
+                                        "description": "An opaque string that represents a user for quota purposes. Must not exceed 40 characters.",
+                                        "type": {
+                                            "kind": "SCALAR",
+                                            "name": "String",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "regionCode",
+                                        "description": "The regionCode parameter instructs the API to return search results for the specified country. The parameter value is an ISO 3166-1 alpha-2 country code.",
+                                        "type": {
+                                            "kind": "SCALAR",
+                                            "name": "String",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "relatedToVideoId",
+                                        "description": "The relatedToVideoId parameter retrieves a list of videos that are related to the video that the parameter value identifies. The parameter value must be set to a YouTube video ID and, if you are using this parameter, the type parameter must be set to video.",
+                                        "type": {
+                                            "kind": "SCALAR",
+                                            "name": "String",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "relevanceLanguage",
+                                        "description": "The relevanceLanguage parameter instructs the API to return search results that are most relevant to the specified language. The parameter value is typically an ISO 639-1 two-letter language code. However, you should use the values zh-Hans for simplified Chinese and zh-Hant for traditional Chinese. Please note that results in other languages will still be returned if they are highly relevant to the search query term.",
+                                        "type": {
+                                            "kind": "SCALAR",
+                                            "name": "String",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "safeSearch",
+                                        "description": "The safeSearch parameter indicates whether the search results should include restricted content as well as standard content.",
+                                        "type": {
+                                            "kind": "ENUM",
+                                            "name": "SafeSearch",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "topicId",
+                                        "description": "The topicId parameter indicates that the API response should only contain resources associated with the specified topic. The value identifies a Freebase topic ID.",
+                                        "type": {
+                                            "kind": "SCALAR",
+                                            "name": "String",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "type",
+                                        "description": "The type parameter restricts a search query to only retrieve a particular type of resource. The value is a comma-separated list of resource types.",
+                                        "type": {
+                                            "kind": "SCALAR",
+                                            "name": "String",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "userIp",
+                                        "description": "Deprecated. Please use quotaUser instead.",
+                                        "type": {
+                                            "kind": "SCALAR",
+                                            "name": "String",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "videoCaption",
+                                        "description": "The videoCaption parameter indicates whether the API should filter video search results based on whether they have captions. If you specify a value for this parameter, you must also set the type parameter's value to video.",
+                                        "type": {
+                                            "kind": "ENUM",
+                                            "name": "VideoCaption",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "videoCategoryId",
+                                        "description": "The videoCategoryId parameter filters video search results based on their category. If you specify a value for this parameter, you must also set the type parameter's value to video.",
+                                        "type": {
+                                            "kind": "SCALAR",
+                                            "name": "String",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "videoDefinition",
+                                        "description": "The videoDefinition parameter lets you restrict a search to only include either high definition (HD) or standard definition (SD) videos. HD videos are available for playback in at least 720p, though higher resolutions, like 1080p, might also be available. If you specify a value for this parameter, you must also set the type parameter's value to video.",
+                                        "type": {
+                                            "kind": "ENUM",
+                                            "name": "VideoDefinition",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "videoDimension",
+                                        "description": "The videoDimension parameter lets you restrict a search to only retrieve 2D or 3D videos. If you specify a value for this parameter, you must also set the type parameter's value to video.",
+                                        "type": {
+                                            "kind": "ENUM",
+                                            "name": "VideoDimension",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "videoDuration",
+                                        "description": "The videoDuration parameter filters video search results based on their duration. If you specify a value for this parameter, you must also set the type parameter's value to video.",
+                                        "type": {
+                                            "kind": "ENUM",
+                                            "name": "VideoDuration",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "videoEmbeddable",
+                                        "description": "The videoEmbeddable parameter lets you to restrict a search to only videos that can be embedded into a webpage. If you specify a value for this parameter, you must also set the type parameter's value to video.",
+                                        "type": {
+                                            "kind": "ENUM",
+                                            "name": "VideoEmbeddable",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "videoLicense",
+                                        "description": "The videoLicense parameter filters search results to only include videos with a particular license. YouTube lets video uploaders choose to attach either the Creative Commons license or the standard YouTube license to each of their videos. If you specify a value for this parameter, you must also set the type parameter's value to video.",
+                                        "type": {
+                                            "kind": "ENUM",
+                                            "name": "VideoLicense",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "videoSyndicated",
+                                        "description": "The videoSyndicated parameter lets you to restrict a search to only videos that can be played outside youtube.com. If you specify a value for this parameter, you must also set the type parameter's value to video.",
+                                        "type": {
+                                            "kind": "ENUM",
+                                            "name": "VideoSyndicated",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    },
+                                    {
+                                        "name": "videoType",
+                                        "description": "The videoType parameter lets you restrict a search to a particular type of videos. If you specify a value for this parameter, you must also set the type parameter's value to video.",
+                                        "type": {
+                                            "kind": "ENUM",
+                                            "name": "VideoType",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": null
+                                    }
+                                ],
+                                "type": {
+                                    "kind": "OBJECT",
+                                    "name": "Search",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "inputFields": null,
+                        "interfaces": [],
+                        "enumValues": null,
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "ENUM",
+                        "name": "Alt",
+                        "description": null,
+                        "fields": null,
+                        "inputFields": null,
+                        "interfaces": null,
+                        "enumValues": [
+                            {
+                                "name": "JSON",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "SCALAR",
+                        "name": "String",
+                        "description": "The `String` scalar type represents textual data, represented as UTF-8 character sequences. The String type is most often used by GraphQL to represent free-form human-readable text.",
+                        "fields": null,
+                        "inputFields": null,
+                        "interfaces": null,
+                        "enumValues": null,
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "ENUM",
+                        "name": "ChannelType",
+                        "description": null,
+                        "fields": null,
+                        "inputFields": null,
+                        "interfaces": null,
+                        "enumValues": [
+                            {
+                                "name": "ANY",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "SHOW",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "ENUM",
+                        "name": "EventType",
+                        "description": null,
+                        "fields": null,
+                        "inputFields": null,
+                        "interfaces": null,
+                        "enumValues": [
+                            {
+                                "name": "COMPLETED",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "LIVE",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "UPCOMING",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "SCALAR",
+                        "name": "Boolean",
+                        "description": "The `Boolean` scalar type represents `true` or `false`.",
+                        "fields": null,
+                        "inputFields": null,
+                        "interfaces": null,
+                        "enumValues": null,
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "SCALAR",
+                        "name": "Int",
+                        "description": "The `Int` scalar type represents non-fractional signed whole numeric values. Int can represent values between -(2^31) and 2^31 - 1.",
+                        "fields": null,
+                        "inputFields": null,
+                        "interfaces": null,
+                        "enumValues": null,
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "ENUM",
+                        "name": "Order",
+                        "description": null,
+                        "fields": null,
+                        "inputFields": null,
+                        "interfaces": null,
+                        "enumValues": [
+                            {
+                                "name": "DATE",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "RATING",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "RELEVANCE",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "TITLE",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "VIDEOCOUNT",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "VIEWCOUNT",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "ENUM",
+                        "name": "SafeSearch",
+                        "description": null,
+                        "fields": null,
+                        "inputFields": null,
+                        "interfaces": null,
+                        "enumValues": [
+                            {
+                                "name": "MODERATE",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "NONE",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "STRICT",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "ENUM",
+                        "name": "VideoCaption",
+                        "description": null,
+                        "fields": null,
+                        "inputFields": null,
+                        "interfaces": null,
+                        "enumValues": [
+                            {
+                                "name": "ANY",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "CLOSEDCAPTION",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "NONE",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "ENUM",
+                        "name": "VideoDefinition",
+                        "description": null,
+                        "fields": null,
+                        "inputFields": null,
+                        "interfaces": null,
+                        "enumValues": [
+                            {
+                                "name": "ANY",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "HIGH",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "STANDARD",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "ENUM",
+                        "name": "VideoDimension",
+                        "description": null,
+                        "fields": null,
+                        "inputFields": null,
+                        "interfaces": null,
+                        "enumValues": [
+                            {
+                                "name": "_2D",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "_3D",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "ANY",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "ENUM",
+                        "name": "VideoDuration",
+                        "description": null,
+                        "fields": null,
+                        "inputFields": null,
+                        "interfaces": null,
+                        "enumValues": [
+                            {
+                                "name": "ANY",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "LONG",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "MEDIUM",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "SHORT",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "ENUM",
+                        "name": "VideoEmbeddable",
+                        "description": null,
+                        "fields": null,
+                        "inputFields": null,
+                        "interfaces": null,
+                        "enumValues": [
+                            {
+                                "name": "ANY",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "TRUE",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "ENUM",
+                        "name": "VideoLicense",
+                        "description": null,
+                        "fields": null,
+                        "inputFields": null,
+                        "interfaces": null,
+                        "enumValues": [
+                            {
+                                "name": "ANY",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "CREATIVECOMMON",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "YOUTUBE",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "ENUM",
+                        "name": "VideoSyndicated",
+                        "description": null,
+                        "fields": null,
+                        "inputFields": null,
+                        "interfaces": null,
+                        "enumValues": [
+                            {
+                                "name": "ANY",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "TRUE",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "ENUM",
+                        "name": "VideoType",
+                        "description": null,
+                        "fields": null,
+                        "inputFields": null,
+                        "interfaces": null,
+                        "enumValues": [
+                            {
+                                "name": "ANY",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "EPISODE",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "MOVIE",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "OBJECT",
+                        "name": "Search",
+                        "description": null,
+                        "fields": [
+                            {
+                                "name": "etag",
+                                "description": "Etag of this resource.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "eventId",
+                                "description": "Serialized EventId of the request which produced this response.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "items",
+                                "description": "A list of results that match the search criteria.",
+                                "args": [],
+                                "type": {
+                                    "kind": "LIST",
+                                    "name": null,
+                                    "ofType": {
+                                        "kind": "OBJECT",
+                                        "name": "ItemsListItem",
+                                        "ofType": null
+                                    }
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "kind",
+                                "description": "Identifies what kind of resource this is. Value: the fixed string \"youtube#searchListResponse\".",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "nextPageToken",
+                                "description": "The token that can be used as the value of the pageToken parameter to retrieve the next page in the result set.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "pageInfo",
+                                "description": "Paging details for lists of resources, including total number of items available and number of resources returned in a single page.",
+                                "args": [],
+                                "type": {
+                                    "kind": "OBJECT",
+                                    "name": "PageInfo",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "prevPageToken",
+                                "description": "The token that can be used as the value of the pageToken parameter to retrieve the previous page in the result set.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "regionCode",
+                                "description": null,
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "tokenPagination",
+                                "description": "Stub token pagination template to suppress results.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "JSON",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "visitorId",
+                                "description": "The visitorId identifies the visitor.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "inputFields": null,
+                        "interfaces": [],
+                        "enumValues": null,
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "OBJECT",
+                        "name": "ItemsListItem",
+                        "description": "A search result contains information about a YouTube video, channel, or playlist that matches the search parameters specified in an API request. While a search result points to a uniquely identifiable resource, like a video, it does not have its own persistent data.",
+                        "fields": [
+                            {
+                                "name": "etag",
+                                "description": "Etag of this resource.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "id",
+                                "description": "A resource id is a generic reference that points to another YouTube resource.",
+                                "args": [],
+                                "type": {
+                                    "kind": "OBJECT",
+                                    "name": "Id",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "kind",
+                                "description": "Identifies what kind of resource this is. Value: the fixed string \"youtube#searchResult\".",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "snippet",
+                                "description": "Basic details about a search result, including title, description and thumbnails of the item referenced by the search result.",
+                                "args": [],
+                                "type": {
+                                    "kind": "OBJECT",
+                                    "name": "Snippet",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "inputFields": null,
+                        "interfaces": [],
+                        "enumValues": null,
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "OBJECT",
+                        "name": "Id",
+                        "description": "A resource id is a generic reference that points to another YouTube resource.",
+                        "fields": [
+                            {
+                                "name": "channelId",
+                                "description": "The ID that YouTube uses to uniquely identify the referred resource, if that resource is a channel. This property is only present if the resourceId.kind value is youtube#channel.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "kind",
+                                "description": "The type of the API resource.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "playlistId",
+                                "description": "The ID that YouTube uses to uniquely identify the referred resource, if that resource is a playlist. This property is only present if the resourceId.kind value is youtube#playlist.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "videoId",
+                                "description": "The ID that YouTube uses to uniquely identify the referred resource, if that resource is a video. This property is only present if the resourceId.kind value is youtube#video.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "inputFields": null,
+                        "interfaces": [],
+                        "enumValues": null,
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "OBJECT",
+                        "name": "Snippet",
+                        "description": "Basic details about a search result, including title, description and thumbnails of the item referenced by the search result.",
+                        "fields": [
+                            {
+                                "name": "channelId",
+                                "description": "The value that YouTube uses to uniquely identify the channel that published the resource that the search result identifies.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "channelTitle",
+                                "description": "The title of the channel that published the resource that the search result identifies.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "description",
+                                "description": "A description of the search result.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "liveBroadcastContent",
+                                "description": "It indicates if the resource (video or channel) has upcoming/active live broadcast content. Or it's \"none\" if there is not any upcoming/active live broadcasts.",
+                                "args": [],
+                                "type": {
+                                    "kind": "ENUM",
+                                    "name": "LiveBroadcastContent",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "publishedAt",
+                                "description": "The creation date and time of the resource that the search result identifies. The value is specified in ISO 8601 (YYYY-MM-DDThh:mm:ss.sZ) format.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "thumbnails",
+                                "description": "Internal representation of thumbnails for a YouTube resource.",
+                                "args": [],
+                                "type": {
+                                    "kind": "OBJECT",
+                                    "name": "Thumbnails",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "title",
+                                "description": "The title of the search result.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "inputFields": null,
+                        "interfaces": [],
+                        "enumValues": null,
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "ENUM",
+                        "name": "LiveBroadcastContent",
+                        "description": null,
+                        "fields": null,
+                        "inputFields": null,
+                        "interfaces": null,
+                        "enumValues": [
+                            {
+                                "name": "LIVE",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "NONE",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "UPCOMING",
+                                "description": null,
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "OBJECT",
+                        "name": "Thumbnails",
+                        "description": "Internal representation of thumbnails for a YouTube resource.",
+                        "fields": [
+                            {
+                                "name": "default",
+                                "description": "A thumbnail is an image representing a YouTube resource.",
+                                "args": [],
+                                "type": {
+                                    "kind": "OBJECT",
+                                    "name": "Default",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "high",
+                                "description": "A thumbnail is an image representing a YouTube resource.",
+                                "args": [],
+                                "type": {
+                                    "kind": "OBJECT",
+                                    "name": "High",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "maxres",
+                                "description": "A thumbnail is an image representing a YouTube resource.",
+                                "args": [],
+                                "type": {
+                                    "kind": "OBJECT",
+                                    "name": "Maxres",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "medium",
+                                "description": "A thumbnail is an image representing a YouTube resource.",
+                                "args": [],
+                                "type": {
+                                    "kind": "OBJECT",
+                                    "name": "Medium",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "standard",
+                                "description": "A thumbnail is an image representing a YouTube resource.",
+                                "args": [],
+                                "type": {
+                                    "kind": "OBJECT",
+                                    "name": "Standard",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "inputFields": null,
+                        "interfaces": [],
+                        "enumValues": null,
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "OBJECT",
+                        "name": "Default",
+                        "description": "A thumbnail is an image representing a YouTube resource.",
+                        "fields": [
+                            {
+                                "name": "height",
+                                "description": "(Optional) Height of the thumbnail image.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "Int",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "url",
+                                "description": "The thumbnail image's URL.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "width",
+                                "description": "(Optional) Width of the thumbnail image.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "Int",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "inputFields": null,
+                        "interfaces": [],
+                        "enumValues": null,
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "OBJECT",
+                        "name": "High",
+                        "description": "A thumbnail is an image representing a YouTube resource.",
+                        "fields": [
+                            {
+                                "name": "height",
+                                "description": "(Optional) Height of the thumbnail image.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "Int",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "url",
+                                "description": "The thumbnail image's URL.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "width",
+                                "description": "(Optional) Width of the thumbnail image.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "Int",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "inputFields": null,
+                        "interfaces": [],
+                        "enumValues": null,
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "OBJECT",
+                        "name": "Maxres",
+                        "description": "A thumbnail is an image representing a YouTube resource.",
+                        "fields": [
+                            {
+                                "name": "height",
+                                "description": "(Optional) Height of the thumbnail image.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "Int",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "url",
+                                "description": "The thumbnail image's URL.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "width",
+                                "description": "(Optional) Width of the thumbnail image.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "Int",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "inputFields": null,
+                        "interfaces": [],
+                        "enumValues": null,
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "OBJECT",
+                        "name": "Medium",
+                        "description": "A thumbnail is an image representing a YouTube resource.",
+                        "fields": [
+                            {
+                                "name": "height",
+                                "description": "(Optional) Height of the thumbnail image.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "Int",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "url",
+                                "description": "The thumbnail image's URL.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "width",
+                                "description": "(Optional) Width of the thumbnail image.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "Int",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "inputFields": null,
+                        "interfaces": [],
+                        "enumValues": null,
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "OBJECT",
+                        "name": "Standard",
+                        "description": "A thumbnail is an image representing a YouTube resource.",
+                        "fields": [
+                            {
+                                "name": "height",
+                                "description": "(Optional) Height of the thumbnail image.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "Int",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "url",
+                                "description": "The thumbnail image's URL.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "width",
+                                "description": "(Optional) Width of the thumbnail image.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "Int",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "inputFields": null,
+                        "interfaces": [],
+                        "enumValues": null,
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "OBJECT",
+                        "name": "PageInfo",
+                        "description": "Paging details for lists of resources, including total number of items available and number of resources returned in a single page.",
+                        "fields": [
+                            {
+                                "name": "resultsPerPage",
+                                "description": "The number of results included in the API response.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "Int",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "totalResults",
+                                "description": "The total number of results in the result set.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "Int",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "inputFields": null,
+                        "interfaces": [],
+                        "enumValues": null,
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "SCALAR",
+                        "name": "JSON",
+                        "description": "The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).",
+                        "fields": null,
+                        "inputFields": null,
+                        "interfaces": null,
+                        "enumValues": null,
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "OBJECT",
+                        "name": "__Schema",
+                        "description": "A GraphQL Schema defines the capabilities of a GraphQL server. It exposes all available types and directives on the server, as well as the entry points for query, mutation, and subscription operations.",
+                        "fields": [
+                            {
+                                "name": "types",
+                                "description": "A list of all types supported by this server.",
+                                "args": [],
+                                "type": {
+                                    "kind": "NON_NULL",
+                                    "name": null,
+                                    "ofType": {
+                                        "kind": "LIST",
+                                        "name": null,
+                                        "ofType": {
+                                            "kind": "NON_NULL",
+                                            "name": null,
+                                            "ofType": {
+                                                "kind": "OBJECT",
+                                                "name": "__Type",
+                                                "ofType": null
+                                            }
+                                        }
+                                    }
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "queryType",
+                                "description": "The type that query operations will be rooted at.",
+                                "args": [],
+                                "type": {
+                                    "kind": "NON_NULL",
+                                    "name": null,
+                                    "ofType": {
+                                        "kind": "OBJECT",
+                                        "name": "__Type",
+                                        "ofType": null
+                                    }
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "mutationType",
+                                "description": "If this server supports mutation, the type that mutation operations will be rooted at.",
+                                "args": [],
+                                "type": {
+                                    "kind": "OBJECT",
+                                    "name": "__Type",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "subscriptionType",
+                                "description": "If this server support subscription, the type that subscription operations will be rooted at.",
+                                "args": [],
+                                "type": {
+                                    "kind": "OBJECT",
+                                    "name": "__Type",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "directives",
+                                "description": "A list of all directives supported by this server.",
+                                "args": [],
+                                "type": {
+                                    "kind": "NON_NULL",
+                                    "name": null,
+                                    "ofType": {
+                                        "kind": "LIST",
+                                        "name": null,
+                                        "ofType": {
+                                            "kind": "NON_NULL",
+                                            "name": null,
+                                            "ofType": {
+                                                "kind": "OBJECT",
+                                                "name": "__Directive",
+                                                "ofType": null
+                                            }
+                                        }
+                                    }
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "inputFields": null,
+                        "interfaces": [],
+                        "enumValues": null,
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "OBJECT",
+                        "name": "__Type",
+                        "description": "The fundamental unit of any GraphQL Schema is the type. There are many kinds of types in GraphQL as represented by the `__TypeKind` enum.\n\nDepending on the kind of a type, certain fields describe information about that type. Scalar types provide no information beyond a name and description, while Enum types provide their values. Object and Interface types provide the fields they describe. Abstract types, Union and Interface, provide the Object types possible at runtime. List and NonNull types compose other types.",
+                        "fields": [
+                            {
+                                "name": "kind",
+                                "description": null,
+                                "args": [],
+                                "type": {
+                                    "kind": "NON_NULL",
+                                    "name": null,
+                                    "ofType": {
+                                        "kind": "ENUM",
+                                        "name": "__TypeKind",
+                                        "ofType": null
+                                    }
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "name",
+                                "description": null,
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "description",
+                                "description": null,
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "fields",
+                                "description": null,
+                                "args": [
+                                    {
+                                        "name": "includeDeprecated",
+                                        "description": null,
+                                        "type": {
+                                            "kind": "SCALAR",
+                                            "name": "Boolean",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": "false"
+                                    }
+                                ],
+                                "type": {
+                                    "kind": "LIST",
+                                    "name": null,
+                                    "ofType": {
+                                        "kind": "NON_NULL",
+                                        "name": null,
+                                        "ofType": {
+                                            "kind": "OBJECT",
+                                            "name": "__Field",
+                                            "ofType": null
+                                        }
+                                    }
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "interfaces",
+                                "description": null,
+                                "args": [],
+                                "type": {
+                                    "kind": "LIST",
+                                    "name": null,
+                                    "ofType": {
+                                        "kind": "NON_NULL",
+                                        "name": null,
+                                        "ofType": {
+                                            "kind": "OBJECT",
+                                            "name": "__Type",
+                                            "ofType": null
+                                        }
+                                    }
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "possibleTypes",
+                                "description": null,
+                                "args": [],
+                                "type": {
+                                    "kind": "LIST",
+                                    "name": null,
+                                    "ofType": {
+                                        "kind": "NON_NULL",
+                                        "name": null,
+                                        "ofType": {
+                                            "kind": "OBJECT",
+                                            "name": "__Type",
+                                            "ofType": null
+                                        }
+                                    }
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "enumValues",
+                                "description": null,
+                                "args": [
+                                    {
+                                        "name": "includeDeprecated",
+                                        "description": null,
+                                        "type": {
+                                            "kind": "SCALAR",
+                                            "name": "Boolean",
+                                            "ofType": null
+                                        },
+                                        "defaultValue": "false"
+                                    }
+                                ],
+                                "type": {
+                                    "kind": "LIST",
+                                    "name": null,
+                                    "ofType": {
+                                        "kind": "NON_NULL",
+                                        "name": null,
+                                        "ofType": {
+                                            "kind": "OBJECT",
+                                            "name": "__EnumValue",
+                                            "ofType": null
+                                        }
+                                    }
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "inputFields",
+                                "description": null,
+                                "args": [],
+                                "type": {
+                                    "kind": "LIST",
+                                    "name": null,
+                                    "ofType": {
+                                        "kind": "NON_NULL",
+                                        "name": null,
+                                        "ofType": {
+                                            "kind": "OBJECT",
+                                            "name": "__InputValue",
+                                            "ofType": null
+                                        }
+                                    }
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "ofType",
+                                "description": null,
+                                "args": [],
+                                "type": {
+                                    "kind": "OBJECT",
+                                    "name": "__Type",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "inputFields": null,
+                        "interfaces": [],
+                        "enumValues": null,
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "ENUM",
+                        "name": "__TypeKind",
+                        "description": "An enum describing what kind of type a given `__Type` is.",
+                        "fields": null,
+                        "inputFields": null,
+                        "interfaces": null,
+                        "enumValues": [
+                            {
+                                "name": "SCALAR",
+                                "description": "Indicates this type is a scalar.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "OBJECT",
+                                "description": "Indicates this type is an object. `fields` and `interfaces` are valid fields.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "INTERFACE",
+                                "description": "Indicates this type is an interface. `fields` and `possibleTypes` are valid fields.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "UNION",
+                                "description": "Indicates this type is a union. `possibleTypes` is a valid field.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "ENUM",
+                                "description": "Indicates this type is an enum. `enumValues` is a valid field.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "INPUT_OBJECT",
+                                "description": "Indicates this type is an input object. `inputFields` is a valid field.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "LIST",
+                                "description": "Indicates this type is a list. `ofType` is a valid field.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "NON_NULL",
+                                "description": "Indicates this type is a non-null. `ofType` is a valid field.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "OBJECT",
+                        "name": "__Field",
+                        "description": "Object and Interface types are described by a list of Fields, each of which has a name, potentially a list of arguments, and a return type.",
+                        "fields": [
+                            {
+                                "name": "name",
+                                "description": null,
+                                "args": [],
+                                "type": {
+                                    "kind": "NON_NULL",
+                                    "name": null,
+                                    "ofType": {
+                                        "kind": "SCALAR",
+                                        "name": "String",
+                                        "ofType": null
+                                    }
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "description",
+                                "description": null,
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "args",
+                                "description": null,
+                                "args": [],
+                                "type": {
+                                    "kind": "NON_NULL",
+                                    "name": null,
+                                    "ofType": {
+                                        "kind": "LIST",
+                                        "name": null,
+                                        "ofType": {
+                                            "kind": "NON_NULL",
+                                            "name": null,
+                                            "ofType": {
+                                                "kind": "OBJECT",
+                                                "name": "__InputValue",
+                                                "ofType": null
+                                            }
+                                        }
+                                    }
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "type",
+                                "description": null,
+                                "args": [],
+                                "type": {
+                                    "kind": "NON_NULL",
+                                    "name": null,
+                                    "ofType": {
+                                        "kind": "OBJECT",
+                                        "name": "__Type",
+                                        "ofType": null
+                                    }
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "isDeprecated",
+                                "description": null,
+                                "args": [],
+                                "type": {
+                                    "kind": "NON_NULL",
+                                    "name": null,
+                                    "ofType": {
+                                        "kind": "SCALAR",
+                                        "name": "Boolean",
+                                        "ofType": null
+                                    }
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "deprecationReason",
+                                "description": null,
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "inputFields": null,
+                        "interfaces": [],
+                        "enumValues": null,
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "OBJECT",
+                        "name": "__InputValue",
+                        "description": "Arguments provided to Fields or Directives and the input fields of an InputObject are represented as Input Values which describe their type and optionally a default value.",
+                        "fields": [
+                            {
+                                "name": "name",
+                                "description": null,
+                                "args": [],
+                                "type": {
+                                    "kind": "NON_NULL",
+                                    "name": null,
+                                    "ofType": {
+                                        "kind": "SCALAR",
+                                        "name": "String",
+                                        "ofType": null
+                                    }
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "description",
+                                "description": null,
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "type",
+                                "description": null,
+                                "args": [],
+                                "type": {
+                                    "kind": "NON_NULL",
+                                    "name": null,
+                                    "ofType": {
+                                        "kind": "OBJECT",
+                                        "name": "__Type",
+                                        "ofType": null
+                                    }
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "defaultValue",
+                                "description": "A GraphQL-formatted string representing the default value for this input value.",
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "inputFields": null,
+                        "interfaces": [],
+                        "enumValues": null,
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "OBJECT",
+                        "name": "__EnumValue",
+                        "description": "One possible value for a given Enum. Enum values are unique values, not a placeholder for a string or numeric value. However an Enum value is returned in a JSON response as a string.",
+                        "fields": [
+                            {
+                                "name": "name",
+                                "description": null,
+                                "args": [],
+                                "type": {
+                                    "kind": "NON_NULL",
+                                    "name": null,
+                                    "ofType": {
+                                        "kind": "SCALAR",
+                                        "name": "String",
+                                        "ofType": null
+                                    }
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "description",
+                                "description": null,
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "isDeprecated",
+                                "description": null,
+                                "args": [],
+                                "type": {
+                                    "kind": "NON_NULL",
+                                    "name": null,
+                                    "ofType": {
+                                        "kind": "SCALAR",
+                                        "name": "Boolean",
+                                        "ofType": null
+                                    }
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "deprecationReason",
+                                "description": null,
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "inputFields": null,
+                        "interfaces": [],
+                        "enumValues": null,
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "OBJECT",
+                        "name": "__Directive",
+                        "description": "A Directive provides a way to describe alternate runtime execution and type validation behavior in a GraphQL document.\n\nIn some cases, you need to provide options to alter GraphQL's execution behavior in ways field arguments will not suffice, such as conditionally including or skipping a field. Directives provide this by describing additional information to the executor.",
+                        "fields": [
+                            {
+                                "name": "name",
+                                "description": null,
+                                "args": [],
+                                "type": {
+                                    "kind": "NON_NULL",
+                                    "name": null,
+                                    "ofType": {
+                                        "kind": "SCALAR",
+                                        "name": "String",
+                                        "ofType": null
+                                    }
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "description",
+                                "description": null,
+                                "args": [],
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "locations",
+                                "description": null,
+                                "args": [],
+                                "type": {
+                                    "kind": "NON_NULL",
+                                    "name": null,
+                                    "ofType": {
+                                        "kind": "LIST",
+                                        "name": null,
+                                        "ofType": {
+                                            "kind": "NON_NULL",
+                                            "name": null,
+                                            "ofType": {
+                                                "kind": "ENUM",
+                                                "name": "__DirectiveLocation",
+                                                "ofType": null
+                                            }
+                                        }
+                                    }
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "args",
+                                "description": null,
+                                "args": [],
+                                "type": {
+                                    "kind": "NON_NULL",
+                                    "name": null,
+                                    "ofType": {
+                                        "kind": "LIST",
+                                        "name": null,
+                                        "ofType": {
+                                            "kind": "NON_NULL",
+                                            "name": null,
+                                            "ofType": {
+                                                "kind": "OBJECT",
+                                                "name": "__InputValue",
+                                                "ofType": null
+                                            }
+                                        }
+                                    }
+                                },
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "inputFields": null,
+                        "interfaces": [],
+                        "enumValues": null,
+                        "possibleTypes": null
+                    },
+                    {
+                        "kind": "ENUM",
+                        "name": "__DirectiveLocation",
+                        "description": "A Directive can be adjacent to many parts of the GraphQL language, a __DirectiveLocation describes one such possible adjacencies.",
+                        "fields": null,
+                        "inputFields": null,
+                        "interfaces": null,
+                        "enumValues": [
+                            {
+                                "name": "QUERY",
+                                "description": "Location adjacent to a query operation.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "MUTATION",
+                                "description": "Location adjacent to a mutation operation.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "SUBSCRIPTION",
+                                "description": "Location adjacent to a subscription operation.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "FIELD",
+                                "description": "Location adjacent to a field.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "FRAGMENT_DEFINITION",
+                                "description": "Location adjacent to a fragment definition.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "FRAGMENT_SPREAD",
+                                "description": "Location adjacent to a fragment spread.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "INLINE_FRAGMENT",
+                                "description": "Location adjacent to an inline fragment.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "VARIABLE_DEFINITION",
+                                "description": "Location adjacent to a variable definition.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "SCHEMA",
+                                "description": "Location adjacent to a schema definition.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "SCALAR",
+                                "description": "Location adjacent to a scalar definition.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "OBJECT",
+                                "description": "Location adjacent to an object type definition.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "FIELD_DEFINITION",
+                                "description": "Location adjacent to a field definition.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "ARGUMENT_DEFINITION",
+                                "description": "Location adjacent to an argument definition.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "INTERFACE",
+                                "description": "Location adjacent to an interface definition.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "UNION",
+                                "description": "Location adjacent to a union definition.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "ENUM",
+                                "description": "Location adjacent to an enum definition.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "ENUM_VALUE",
+                                "description": "Location adjacent to an enum value definition.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "INPUT_OBJECT",
+                                "description": "Location adjacent to an input object type definition.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            },
+                            {
+                                "name": "INPUT_FIELD_DEFINITION",
+                                "description": "Location adjacent to an input object field definition.",
+                                "isDeprecated": false,
+                                "deprecationReason": null
+                            }
+                        ],
+                        "possibleTypes": null
+                    }
+                ],
+                "directives": [
+                    {
+                        "name": "include",
+                        "description": "Directs the executor to include this field or fragment only when the `if` argument is true.",
+                        "locations": [
+                            "FIELD",
+                            "FRAGMENT_SPREAD",
+                            "INLINE_FRAGMENT"
+                        ],
+                        "args": [
+                            {
+                                "name": "if",
+                                "description": "Included when true.",
+                                "type": {
+                                    "kind": "NON_NULL",
+                                    "name": null,
+                                    "ofType": {
+                                        "kind": "SCALAR",
+                                        "name": "Boolean",
+                                        "ofType": null
+                                    }
+                                },
+                                "defaultValue": null
+                            }
+                        ]
+                    },
+                    {
+                        "name": "skip",
+                        "description": "Directs the executor to skip this field or fragment when the `if` argument is true.",
+                        "locations": [
+                            "FIELD",
+                            "FRAGMENT_SPREAD",
+                            "INLINE_FRAGMENT"
+                        ],
+                        "args": [
+                            {
+                                "name": "if",
+                                "description": "Skipped when true.",
+                                "type": {
+                                    "kind": "NON_NULL",
+                                    "name": null,
+                                    "ofType": {
+                                        "kind": "SCALAR",
+                                        "name": "Boolean",
+                                        "ofType": null
+                                    }
+                                },
+                                "defaultValue": null
+                            }
+                        ]
+                    },
+                    {
+                        "name": "deprecated",
+                        "description": "Marks an element of a GraphQL schema as no longer supported.",
+                        "locations": [
+                            "FIELD_DEFINITION",
+                            "ENUM_VALUE"
+                        ],
+                        "args": [
+                            {
+                                "name": "reason",
+                                "description": "Explains why this element was deprecated, usually also including a suggestion for how to access supported similar data. Formatted using the Markdown syntax (as specified by [CommonMark](https://commonmark.org/).",
+                                "type": {
+                                    "kind": "SCALAR",
+                                    "name": "String",
+                                    "ofType": null
+                                },
+                                "defaultValue": "\"No longer supported\""
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+}
