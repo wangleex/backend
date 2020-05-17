@@ -1,3 +1,5 @@
+'use strict';
+
 require('dotenv').config()
 var express = require('express');
 var app = express();
@@ -25,8 +27,6 @@ const query = util.promisify(con.query).bind(con);
 const reddit_schema =  JSON.parse(fs.readFileSync('reddit_schema.json', 'utf8'));
 const reddit_response =  JSON.parse(fs.readFileSync('reddit_response.json', 'utf8'));
 
-'use strict';
-
 app.use(express.json());
 app.use(passport.initialize());
 passportInit();
@@ -42,7 +42,7 @@ app.use(session({
 	store: new MongoStore({ client })
   }))
 
-client.connect(async function(err, client) {
+client.connect(async (err, client) => {
 	const db = client.db('listenonline');
 
 	try {
@@ -88,7 +88,7 @@ app.get('/auth/youtube/callback', passport.authenticate('youtube'), authControll
 
 app.get('/auth/reddit/callback', passport.authenticate('reddit'), authController.reddit);
 
-app.get('/app/api/social-media-socket/:name', async function(req, res, next) {
+app.get('/app/api/social-media-socket/:name', async (req, res, next) => {
 	req.session.name = req.params.name
 	req.session.socketId = req.query.socketId;
 
@@ -109,13 +109,8 @@ app.get('/app/api/social-media-socket/:name', async function(req, res, next) {
 	}
   });
 
-app.get('/', function (req, res) {
-	console.log('hiiiiAniii');
-	res.send('helllooo!');
-})
-
 ////   Authentication Check    ////
-app.post('/app/api/auth/login', async function (req, res) {
+app.post('/app/api/auth/login', async (req, res) => {
 	const email = req.body.email;
 	const password = req.body.password;
 
@@ -125,37 +120,50 @@ app.post('/app/api/auth/login', async function (req, res) {
 		error: {}
 	};
 
-	con.query("select id, email, name, isAdmin, password from users where email = ?", [email], function(err, output) {
-	  	if (err) {
-	  		throw err;
-		}
-	  	if (output.length == 0) {
-			console.log("fsdfsdd")
-	  		toSend.error = req.body;
-	  		res.send(toSend);
-		}
+	try {
+		const output = await query("select id, email, name, isAdmin, password from users where email = ?", [email]);
+		const isMatch = await bcrypt.compare(password, output[0].password);
+		output[0].isAdmin = !!parseInt(output[0].isAdmin)
+		toSend.data = {...output[0]};
+		req.session.user_id = output[0].id
+		req.session.isAdmin = output[0].isAdmin 
+		res.send(toSend);
 
-		else {
-			bcrypt.compare(password, output[0].password, function(err, isMatch) {
-				if (err){
-					throw err;
-				}
-				if (isMatch) {
-					output[0].isAdmin = !!parseInt(output[0].isAdmin)
-					toSend.data = {...output[0]};
-					req.session.user_id = output[0].id
-					req.session.isAdmin = output[0].isAdmin 
-					res.send(toSend);
-				} else {
-					toSend.error = req.body;
-					res.send(toSend);
-				}
-				});
-		}
-	  });
+	} catch(err) {
+		// TODO
+	}
+
+	// con.query("select id, email, name, isAdmin, password from users where email = ?", [email], function(err, output) {
+	//   	if (err) {
+	//   		throw err;
+	// 	}
+	//   	if (output.length == 0) {
+	// 		console.log("fsdfsdd")
+	//   		toSend.error = req.body;
+	//   		res.send(toSend);
+	// 	}
+
+	// 	else {
+	// 		bcrypt.compare(password, output[0].password, function(err, isMatch) {
+	// 			if (err){
+	// 				throw err;
+	// 			}
+	// 			if (isMatch) {
+	// 				output[0].isAdmin = !!parseInt(output[0].isAdmin)
+	// 				toSend.data = {...output[0]};
+	// 				req.session.user_id = output[0].id
+	// 				req.session.isAdmin = output[0].isAdmin 
+	// 				res.send(toSend);
+	// 			} else {
+	// 				toSend.error = req.body;
+	// 				res.send(toSend);
+	// 			}
+	// 			});
+	// 	}
+	//   });
 });
 
-app.post('/app/api/auth/register', async function (req, res) {
+app.post('/app/api/auth/register', async (req, res) => {
 	var username = req.body.name;
 	var pass = req.body.password;
 	var email_ins = req.body.email;
@@ -166,30 +174,43 @@ app.post('/app/api/auth/register', async function (req, res) {
 		error: {}
 	};
 
-	con.query("insert into users(name, email, password, invitationCode) values (?,?,?,?)", 
-			[username, email_ins, await bcrypt.hash(pass, 12), invCode ], function(err, output) {
-	  	if (err) {
-	  		toSend.error = req.body;
-	  		res.send(toSend);
-	  	} else {
-	  		con.query("select id, email, name, isAdmin from users where name = ?", [username], function(err, output) {
-	  			if (err) {
-	  				throw err;
-				}
-				
-				output[0].isAdmin = !!parseInt(output[0].isAdmin)
-				toSend.data = {...output[0]};
-				req.session.user_id = output[0].id
-				req.session.isAdmin = output[0].isAdmin 
-	  			res.send(toSend);
-	  		});
-	  	}	  	
+	try {
+		query("insert into users(name, email, password, invitationCode) values (?,?,?,?)", 
+		[username, email_ins, await bcrypt.hash(pass, 12), invCode ]);
 
-	  });
+		const output = await query("select id, email, name, isAdmin from users where name = ?", [username]);
+
+		output[0].isAdmin = !!parseInt(output[0].isAdmin)
+		toSend.data = {...output[0]};
+		req.session.user_id = output[0].id
+		req.session.isAdmin = output[0].isAdmin 
+		res.send(toSend);
+	} catch(err) {
+		// TODO
+	}
+
+	// con.query("insert into users(name, email, password, invitationCode) values (?,?,?,?)", 
+	// 		[username, email_ins, await bcrypt.hash(pass, 12), invCode ], function(err, output) {
+	//   	if (err) {
+	//   		toSend.error = req.body;
+	//   		res.send(toSend);
+	//   	} else {
+	//   		con.query("select id, email, name, isAdmin from users where name = ?", [username], function(err, output) {
+	//   			if (err) {
+	//   				throw err;
+	// 			}
+				
+	// 			output[0].isAdmin = !!parseInt(output[0].isAdmin)
+	// 			toSend.data = {...output[0]};
+	// 			req.session.user_id = output[0].id
+	// 			req.session.isAdmin = output[0].isAdmin 
+	//   			res.send(toSend);
+	//   		});
+	//   	}	  	
+	//   });
 });
 
-app.get('/app/api/auth/logout', function (req, res) {
-	console.log(req.session);
+app.get('/app/api/auth/logout', (req, res) => {
 	let toSend = {
 		data: '',
 	};
@@ -207,11 +228,7 @@ app.get('/app/api/auth/logout', function (req, res) {
 });
 
 // done
-app.get('/app/api/servers', async function (req, res) {
-	//assert.equal(null, err);
-
-
-	//console.log(req.body);
+app.get('/app/api/servers', async (req, res) => {
 	let toSend = {
 		data: [],
 		error: {}
@@ -227,7 +244,7 @@ app.get('/app/api/servers', async function (req, res) {
 });
 
 // done
-app.put('/app/api/server/update', async function (req, res) {
+app.put('/app/api/server/update', async (req, res) => {
 	const body = req.body.data;
 	const type = req.body.type;
 	
@@ -262,7 +279,7 @@ app.put('/app/api/server/update', async function (req, res) {
 	}
 });
 
-app.get('/app/api/server/refresh', async function (req, res) {
+app.get('/app/api/server/refresh', async (req, res) => {
 	const name = req.query.name;
 	let toSend = {
 		data: name,
@@ -284,7 +301,7 @@ app.get('/app/api/server/refresh', async function (req, res) {
 });
 
 ///   social media platforms    ////
-app.get('/app/api/social-media-platforms', async function (req, res) {
+app.get('/app/api/social-media-platforms', async (req, res) => {
 
 	let toSend = {
 		data: [],
@@ -314,7 +331,7 @@ app.get('/app/api/social-media-platforms', async function (req, res) {
 
 ////     queries table     ////
 // done
-app.get('/app/api/queries', async function (req, res) {
+app.get('/app/api/queries', async (req, res) => {
 	let toSend = {
 		data: [],
 		error: {}
@@ -330,7 +347,7 @@ app.get('/app/api/queries', async function (req, res) {
 	}
 });
 
-app.get('/app/api/query/sources', async function (req, res) {
+app.get('/app/api/query/sources', async (req, res) => {
 	let toSend = {
 		data: [],
 		error: {}
@@ -345,7 +362,7 @@ app.get('/app/api/query/sources', async function (req, res) {
 	}
 });
 
-app.get('/app/api/query/full-schema', async function (req, res) {
+app.get('/app/api/query/full-schema', async (req, res) => {
 	const source = req.query.source;
 
 	let toSend = {
@@ -403,8 +420,8 @@ function toGraphQLQueryString(result, node) {
 
 
 /////   *******    /////
-app.put('/app/api/query/update',  async function (req, res) {
-	const query = req.body.data;
+app.put('/app/api/query/update',  async (req, res) => {
+	const data = req.body.data;
 	const type = req.body.type;
 
 	let toSend = {
@@ -412,12 +429,12 @@ app.put('/app/api/query/update',  async function (req, res) {
 	  };
 
 	try {
-		const {_id, url} = await req.db.collection('graphql_servers').findOne({name: query.source}, {url: 1})
+		const {_id, url, slug} = await req.db.collection('graphql_servers').findOne({name: data.source}, {url: 1, slug: 1})
 		const server_id = _id
 
 		// ADD
 		if (type === 0) {
-			req.db.collection('queries').insertOne({...query, server_id , user_id: req.session.user_id})
+			req.db.collection('queries').insertOne({...data, server_id , user_id: req.session.user_id})
 		}
 
 		// DELETE
@@ -428,9 +445,11 @@ app.put('/app/api/query/update',  async function (req, res) {
 		// EXECUTE
 		else if (type === 2) {
 
+			const access_token = (await query('SELECT access_token FROM authorizations WHERE user_id = ? AND server_id = ?', [req.session.user_id, server_id]))[0].access_token;
+
 			const data = {
 				variables: null,
-				query: '{ popular { data { children { data { title } } } } }',
+				query: '{ popular { data { children { data { title id name } } } } }',
 			};
 
 			const result = await fetch(url, {
@@ -439,12 +458,60 @@ app.put('/app/api/query/update',  async function (req, res) {
 				headers: {
 					'Content-Type': 'application/json',
 				},
-			})
+			});
 
 			const json = await result.json();
 
-			const timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
-			req.db.collection('query_histories').insertOne({query_name: query.name, executionTimestamp: timestamp, runtime: 1000, data: json, user_id: req.session.user_id})
+
+
+			if (json.errors[0].extensions.statusCode === 401) {
+				const refresh_token = (await query('SELECT refresh_token FROM authorizations WHERE user_id = ? AND server_id = ?', [req.session.user_id, server_id]))[0].refresh_token;
+				let access_token = null;
+
+				if (slug === 'youtube') {
+					const url = new URL('https://oauth2.googleapis.com/token')
+
+					const params = {
+						client_id: process.env.YOUTUBE_KEY,
+						client_secret: process.env.YOUTUBE_SECRET,
+						refresh_token: refresh_token,
+						grant_type: 'refresh_token'
+					}
+		
+					url.search = new URLSearchParams(params).toString();
+	
+
+					const res = await fetch(url, { method: 'POST' });
+
+					access_token = (await res.json()).access_token;
+				}
+
+				else if (slug === 'reddit') {
+					const auth = Buffer.from(process.env.REDDIT_KEY + ':' + process.env.REDDIT_SECRET).toString('base64');
+
+					const res = await fetch('https://www.reddit.com/api/v1/access_token', {
+						method: 'POST',
+						body: `grant_type=refresh_token&refresh_token=${refresh_token}`,
+						headers: {
+							'Authorization': `Basic ${auth}`,
+							'Content-Type': 'application/x-www-form-urlencoded',
+							'User-Agent' : 'Test Client v/1.0 '
+						},
+					});
+
+					access_token = (await res.json()).access_token;
+				}
+
+				console.log(access_token);
+
+				query("update authorizations set access_token = ? WHERE user_id = ? AND server_id = ?", 
+				[access_token, req.session.user_id, server_id])
+
+
+			} else {
+				const timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+				req.db.collection('query_histories').insertOne({query_name: data.name, executionTimestamp: timestamp, runtime: 1000, data: json, user_id: req.session.user_id})
+			}
 		}
 
 		toSend.data = query;
@@ -452,82 +519,10 @@ app.put('/app/api/query/update',  async function (req, res) {
 	} catch (err) {
 		console.log(err);
 	}
-
-	// let param = req.body;
-	// if (param.type == 0) {
-	// 	let toInsert = param.data;
-	// 	let serv_id = 0;
-	// 	if (toInsert.source == 'reddit') {
-	// 		serv_id = 1;
-	// 	} else if (toInsert.source == 'twitter') {
-	// 		serv_id = 3;
-	// 	} else if (toInsert.source == 'github') {
-	// 		serv_id = 2;
-	// 	}
-	// 	con.query("insert into queries(name, schedule, user_id, server_id) values ('" + toInsert.name + "', " + toInsert.schedule + ", 1, " + serv_id + ")"
-	// 		, function(err, output) {
-	// 	  	if (err)
-	// 	  		throw err;
-
-	// 	  	//res.send("values successfully inserted!");
-
-	// 	  	con.query("select * from queries", function (error, result) {
-	// 	  		if (error) {
-	// 	  			throw error;
-	// 	  		}
-
-	// 	  		toSend.data = result;
-	// 	  		res.send(toSend);
-	// 	  	});
-		 
-	// 	  });
-	// } else if (param.type == 1) {
-	// 	con.query("delete from queries where name = '" + param.data.name + "'", function(err, output) {
-	// 	  	if (err)
-	// 	  		throw err;
-
-	// 	  	con.query("select * from queries", function (error, result) {
-	// 	  		if (error) {
-	// 	  			throw error;
-	// 	  		}
-
-	// 	  		toSend.data = result;
-	// 	  		res.send(toSend);
-	// 	  	});
-	// 	  });
-	// } else if (param.type == 2) {
-		
-	// 	/*let rawdata = fs.readFileSync('fakeQuery.json');
-	// 	let queryJson = JSON.parse(rawdata);
-	// 	console.log(queryJson);
-
-	// 	let querynode = new QueryNode(queryJson.name, queryJson.inputs, queryJson.output, queryJson.children, queryJson.selected);
-	// 	let gql_string = querynode.toGraphQLQueryString();
-	// 	console.log(gql_string);*/
-
-	// 	console.log(req.body.data)
-
-	// 	const data = {
-	//       variables: null,
-	//       query: '{ top (subreddit: "uiuc") { data { children { data { title } } } } }',
-	//     };
-
-	//     fetch('http://localhost:4000/', {
-	//       method: 'POST',
-	//       body: JSON.stringify(data),
-	//       headers: {
-	//         'Content-Type': 'application/json',
-	//       },
-	//     }).then((response) => response.json())
-	//     .then((result) => {
-	//     	console.log(result);
-	//     	res.send(result);
-	//     })
-	// }
 });
 
 ////     query_histories table     ////
-app.get('/app/api/query/history-records', async function (req, res) {
+app.get('/app/api/query/history-records', async (req, res) => {
 	let qName = req.query.queryName;
 	let toSend = {
 		data: [],
@@ -547,7 +542,7 @@ app.get('/app/api/query/history-records', async function (req, res) {
 
 ////     users table     ////
 // done
-app.get('/app/api/users', async function (req, res) {
+app.get('/app/api/users', async (req, res) => {
 
 	let toSend = {
 		data: [],
@@ -564,7 +559,7 @@ app.get('/app/api/users', async function (req, res) {
 	}
 });
 
-app.put('/app/api/user/update', function (req, res) {
+app.put('/app/api/user/update', (req, res) => {
 
 	const toUpdate = req.body.data;
 	const type = req.body.type;
@@ -600,7 +595,7 @@ app.put('/app/api/user/update', function (req, res) {
 
 ////     applications table     ////
 // done 1
-app.get('/app/api/applications', async function (req, res) {
+app.get('/app/api/applications', async (req, res) => {
 	let toSend = {
 		data: [],
 	};
@@ -615,7 +610,7 @@ app.get('/app/api/applications', async function (req, res) {
 });
 
 // done 1
-app.put('/app/api/application/update', async function (req, res) {
+app.put('/app/api/application/update', async (req, res) => {
 	const toUpdate = req.body.data;
 	const type = req.body.type;
 
@@ -653,7 +648,7 @@ app.put('/app/api/application/update', async function (req, res) {
 
 });
 
-var server = app.listen(3000, function () {
+var server = app.listen(3000, () => {
    var host = server.address().address
    var port = server.address().port
    
