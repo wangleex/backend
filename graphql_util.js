@@ -1,13 +1,36 @@
-const fetch = require('node-fetch');
+module.exports = function toGraphQLQueryString(node) {
+  const graphqlQuery = { string: node.name };
 
-module.exports =  async function get_graphql_data(url, query) {
-    const response = await fetch(url, {
-        method: 'POST',
-        body: JSON.stringify({query}),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-    
-    return await response.json();
-}
+  if (node.inputs.length) {
+    graphqlQuery.string += '(';
+    node.inputs.forEach((input, index, inputs) => {
+      if (input.inputType === 'String') {
+        if (input.value) {
+          graphqlQuery.string += `${input.name}:${input.value ? JSON.stringify(input.value) : '""'}`;
+          if (index !== inputs.length - 1) {
+            graphqlQuery.string += ', ';
+          }
+        }
+      } else {
+        graphqlQuery.string += `${input.name}:${input.value}`;
+        if (index !== inputs.length - 1) {
+          graphqlQuery.string += ', ';
+        }
+      }
+    });
+    graphqlQuery.string += ') ';
+  }
+
+  if (node.children.length) {
+    graphqlQuery.string += '{ ';
+
+    node.children.forEach((child) => {
+      if (child.selected) {
+        graphqlQuery.string += `${toGraphQLQueryString(child)} `;
+      }
+    });
+    graphqlQuery.string += '} ';
+  }
+
+  return graphqlQuery.string;
+};
