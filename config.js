@@ -6,10 +6,6 @@ const callbacks = providers.map((provider) => (process.env.NODE_ENV === 'product
 
 const [twitterURL, youtubeURL, redditURL] = callbacks;
 
-exports.CLIENT_ORIGIN = process.env.NODE_ENV === 'production'
-  ? 'http://listen.online'
-  : ['http://127.0.0.1:3001', 'http://localhost:3001'];
-
 exports.TWITTER_CONFIG = {
   consumerKey: process.env.TWITTER_KEY,
   consumerSecret: process.env.TWITTER_SECRET,

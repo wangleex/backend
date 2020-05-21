@@ -51,26 +51,25 @@ module.exports = {
   ],
 
   serverValidationRules: () => [
-    body('data.name').custom((name, { req }) => findServerByName(name, req)).withMessage('Server name already in use'),
+    body('data.name').if(body('type').equals('0')).custom((name, { req }) => findServerByName(name, req)).withMessage('Server name already in use'),
     body('data.slug').isIn(['reddit', 'youtube', 'twitter']).withMessage('Slug must be one of reddit, youtube, or twitter'),
     body('data.url').isURL({ protocols: ['http', 'https'], require_protocol: true, require_tld: false }).withMessage('Server URL is invalid (Must include http or https at beginning)'),
     body('data.description').trim().escape(),
   ],
 
   applicationValidationRules: () => [
-    body('data.name').custom((name) => findApplicationByName(name)).withMessage('Application name already in use'),
+    body('data.name').if(body('type').equals('2')).custom((name) => findApplicationByName(name)).withMessage('Application name already in use'),
     body('data.callbackURL').isURL({ protocols: ['http', 'https'], require_protocol: true, require_tld: false }).withMessage('Callback URL is invalid (Must include http or https at beginning)'),
     body('data.home').trim().escape(),
     body('data.description').optional().trim().escape(),
   ],
 
   queryValidationRules: () => [
-    body('data.name').custom((name, { req }) => findQueryByName(name, req)).withMessage('Query name already in use'),
+    body('data.name').if(body('type').equals('0')).custom((name, { req }) => findQueryByName(name, req)).withMessage('Query name already in use'),
   ],
 
   validate: (req, res, next) => {
     const errors = validationResult(req);
-
     if (errors.isEmpty()) {
       return next();
     }

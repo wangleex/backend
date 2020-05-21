@@ -5,10 +5,11 @@ require('express-async-errors');
 
 const express = require('express');
 const axios = require('axios').default;
+const path = require('path');
 
 const app = express();
-const crypto = require('crypto');
 const cors = require('cors');
+const crypto = require('crypto');
 const passport = require('passport');
 const socketio = require('socket.io');
 const session = require('express-session');
@@ -24,10 +25,11 @@ const { executeQuery } = require('./graphql_util');
 const query = require('./sql');
 const authController = require('./lib/auth.controller');
 const passportInit = require('./lib/passport.init');
-const { CLIENT_ORIGIN } = require('./config');
 const {
   makeGeneralError, makeSuccess, checkUser, getCronPattern,
 } = require('./util');
+
+app.use(express.static(path.join(__dirname, '/build'), { index: false }));
 
 app.use(express.json());
 app.use(passport.initialize());
@@ -35,9 +37,9 @@ passportInit();
 
 app.use(expressMongoDb('mongodb://localhost:27017/listenonline'));
 
-app.use(cors({
-  origin: CLIENT_ORIGIN,
-}));
+if (process.env.NODE_ENV === 'development') {
+  app.use(cors());
+}
 
 app.use(session({
   secret: process.env.SESSION_SECRET,
@@ -328,11 +330,19 @@ app.put('/app/api/application/update', validator.applicationValidationRules(), v
   res.send(makeSuccess(data));
 }));
 
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '/build', 'home.html'));
+});
+
+
+app.get(['/app', '/app/*'], (req, res) => {
+  res.sendFile(path.join(__dirname, '/build', 'index.html'));
+});
+
 // eslint-disable-next-line no-unused-vars
 app.use((error, _req, res, next) => {
   res.send(makeGeneralError([error.message]));
 });
-
 
 const server = app.listen(3000, () => {
   const host = server.address().address;
