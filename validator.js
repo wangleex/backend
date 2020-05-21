@@ -23,6 +23,13 @@ const findServerByName = async (name, req) => {
   }
 };
 
+const findQueryByName = async (name, req) => {
+  const queryResult = await req.db.collection('queries').findOne({ name });
+  if (queryResult) {
+    throw new Error();
+  }
+};
+
 module.exports = {
   loginValidationRules: () => [
     body('email').not().isEmpty().normalizeEmail()
@@ -55,6 +62,10 @@ module.exports = {
     body('data.callbackURL').isURL({ protocols: ['http', 'https'], require_protocol: true, require_tld: false }).withMessage('Callback URL is invalid (Must include http or https at beginning)'),
     body('data.home').trim().escape(),
     body('data.description').optional().trim().escape(),
+  ],
+
+  queryValidationRules: () => [
+    body('data.name').custom((name, { req }) => findQueryByName(name, req)).withMessage('Query name already in use'),
   ],
 
   validate: (req, res, next) => {

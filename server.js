@@ -5,7 +5,6 @@ require('express-async-errors');
 
 const express = require('express');
 const axios = require('axios').default;
-const qs = require('querystring');
 
 const app = express();
 const crypto = require('crypto');
@@ -14,19 +13,20 @@ const passport = require('passport');
 const socketio = require('socket.io');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
+const { CronJob } = require('cron');
 const expressMongoDb = require('express-mongo-db');
 const { introspectionQuery } = require('graphql');
 const MongoStore = require('connect-mongo')(session);
 const asyncHandler = require('express-async-handler');
 const validator = require('./validator.js');
 const { getNextSequenceValue, client } = require('./mongodb_util');
-const toGraphQLQueryString = require('./graphql_util');
+const { executeQuery } = require('./graphql_util');
 const query = require('./sql');
 const authController = require('./lib/auth.controller');
 const passportInit = require('./lib/passport.init');
 const { CLIENT_ORIGIN } = require('./config');
 const {
-  makeGeneralError, makeSuccess, checkUser,
+  makeGeneralError, makeSuccess, checkUser, getCronPattern,
 } = require('./util');
 
 app.use(express.json());
@@ -151,13 +151,13 @@ app.put('/app/api/server/update', validator.serverValidationRules(), validator.v
 
   if (type === 0) {
     // ADD
-    req.db.collection('graphql_servers').insertOne({ _id: await getNextSequenceValue('server_id', req.db), ...data, schema });
+    await req.db.collection('graphql_servers').insertOne({ _id: await getNextSequenceValue('server_id', req.db), ...data, schema });
   } else if (type === 1) {
     // DELETE (with cascading)
-    req.db.collection('graphql_servers').deleteOne({ name: data.name });
+    await req.db.collection('graphql_servers').deleteOne({ name: data.name });
   } else if (type === 2) {
     // UPDATE
-    req.db.collection('graphql_servers').updateOne({ name: data.name }, { ...data, schema });
+    await req.db.collection('graphql_servers').updateOne({ name: data.name }, { ...data, schema });
   }
 
   res.send(makeSuccess(data));
@@ -197,11 +197,37 @@ app.get('/app/api/queries', asyncHandler(async (req, res) => {
   const queries = await req.db.collection('queries').find({ user_id: req.session.user_id }, {
     _id: 0, name: 1, source: 1, schedule: 1, schema: 1,
   }).toArray();
+
   res.send(makeSuccess(queries));
 }));
 
 app.get('/app/api/query/sources', asyncHandler(async (req, res) => {
-  const sources = await req.db.collection('graphql_servers').find({}, { _id: 0, name: 1 }).toArray();
+  let sources = await req.db.collection('graphql_servers').find({}).toArray();
+
+  // First, Catch a situation of there being no servers added
+  if (!sources.length) {
+    throw new Error('There are no active servers with schema available to query.');
+  }
+
+  const authorizations = await query('SELECT * FROM authorizations WHERE user_id = ?', [req.session.user_id]);
+
+  // Next, filter on the servers that this user can query.
+  // If they require authorization, the user must provide one. Otherwise they cannot use that server
+  // Likewise if the server doesn't require authorizaiton they can query it
+  sources = sources.filter((source) => {
+    if (source.requireAuthentication || source.requireAuthorization) {
+      const userAuthorization = authorizations.find((auth) => auth.server_id === source._id);
+      return userAuthorization;
+    }
+
+    return true;
+  });
+
+  // At this point, if there are no servers available they need to authorize.
+  if (!sources.length) {
+    throw new Error('You need to provide authorization in order to query the servers available.');
+  }
+
   res.send(makeSuccess(sources.map((source) => source.name)));
 }));
 
@@ -211,7 +237,7 @@ app.get('/app/api/query/full-schema', asyncHandler(async (req, res) => {
   res.send(makeSuccess(result.schema));
 }));
 
-app.put('/app/api/query/update', asyncHandler(async (req, res) => {
+app.put('/app/api/query/update', validator.queryValidationRules(), validator.validate, asyncHandler(async (req, res) => {
   const { data, type } = req.body;
 
   const { _id, url, slug } = await req.db.collection('graphql_servers').findOne({ name: data.source }, { url: 1, slug: 1 });
@@ -220,70 +246,26 @@ app.put('/app/api/query/update', asyncHandler(async (req, res) => {
   if (type === 0) {
     // ADD
     req.db.collection('queries').insertOne({ ...data, serverId, user_id: req.session.user_id });
+
+    if (data.schedule !== 'Ad hoc') {
+      const job = new CronJob({
+        cronTime: getCronPattern(data.schedule),
+        onTick: async function execute() {
+          await executeQuery(url, slug, data.schema, serverId, req, this.queryName);
+        },
+        context: { queryName: data.name },
+      });
+
+      job.start();
+    }
+
+    // cron job execute query and save in query histroy table
   } else if (type === 1) {
     // DELETE
     // TODO
   } else if (type === 2) {
     // EXECUTE
-    const accessToken = (await query('SELECT access_token FROM authorizations WHERE user_id = ? AND server_id = ?', [req.session.user_id, serverId]))[0].access_token;
-
-    let json = (await axios.post(url, {
-      accessToken,
-      query: toGraphQLQueryString(data.schema),
-    })).data;
-
-    if (json.errors && json.errors[0].extensions.statusCode === 401) {
-      const refreshToken = (await query('SELECT refresh_token FROM authorizations WHERE user_id = ? AND server_id = ?', [req.session.user_id, serverId]))[0].refresh_token;
-      let newAccessToken = null;
-
-      if (slug === 'youtube') {
-        const youtubeURL = new URL('https://oauth2.googleapis.com/token');
-
-        const params = {
-          client_id: process.env.YOUTUBE_KEY,
-          client_secret: process.env.YOUTUBE_SECRET,
-          refreshToken,
-          grant_type: 'refresh_token',
-        };
-
-        youtubeURL.search = new URLSearchParams(params).toString();
-
-        newAccessToken = (await axios.post(youtubeURL)).data.access_token;
-      } else if (slug === 'reddit') {
-        const auth = Buffer.from(`${process.env.REDDIT_KEY}:${process.env.REDDIT_SECRET}`).toString('base64');
-        const redditURL = 'https://www.reddit.com/api/v1/access_token';
-
-        const config = {
-          headers: {
-            Authorization: `Basic ${auth}`,
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'User-Agent': 'Test Client v/1.0 ',
-          },
-        };
-
-        newAccessToken = (await axios.post(redditURL, qs.stringify({
-          grant_type: 'refresh_token',
-          refresh_token: refreshToken,
-        }), config)).data.access_token;
-      }
-
-      query('update authorizations set access_token = ? WHERE user_id = ? AND server_id = ?',
-        [newAccessToken, req.session.user_id, serverId]);
-
-      json = (await axios.post(url, {
-        accessToken: newAccessToken,
-        query: toGraphQLQueryString(data.schema),
-      })).data;
-    }
-
-    const timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
-    req.db.collection('query_histories').insertOne({
-      query_name: data.name,
-      executionTimestamp: timestamp,
-      runtime: 1000,
-      data: json,
-      user_id: req.session.user_id,
-    });
+    await executeQuery(url, slug, data.schema, serverId, req, data.name);
   }
 
   res.send(makeSuccess(data));

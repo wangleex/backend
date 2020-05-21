@@ -1,4 +1,16 @@
 module.exports = {
+  getCronPattern: (scheduleStr) => {
+    const scheduleConversion = {
+      'Once a minute': '* * * * *',
+      'Once an hour': '0 * * * *',
+      'Once a day': '0 0 * * *',
+      'Once a week': '0 0 * * 0',
+      'Once a month': '0 0 1 * *',
+    };
+
+    return scheduleConversion[scheduleStr];
+  },
+
   makeGeneralError: (err) => ({ data: null, error: { generalError: err } }),
 
   makeFieldError: (err) => ({ data: null, error: { fieldError: err } }),
