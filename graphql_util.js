@@ -107,10 +107,10 @@ module.exports = {
       user_id: req.session.user_id,
     });
 
-    const applications = await query('SELECT callback_url FROM applications WHERE user_id=?', [req.session.user_id]);
+    const applications = await query('SELECT callback FROM applications WHERE user_id=?', [req.session.user_id]);
 
     applications.forEach((app) => {
-      axios.post(app.callback_url, {
+      axios.post(app.callback, {
         executionTimestamp: timestamp,
         data: result,
         runtime: duration,

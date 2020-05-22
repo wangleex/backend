@@ -309,7 +309,7 @@ app.put('/app/api/user/update', asyncHandler(async (req, res) => {
 }));
 
 app.get('/app/api/applications', asyncHandler(async (req, res) => {
-  const result = await query('select callback_url as callbackURL, home, name, description, cast(id as char) as id from applications WHERE user_id = ?', [req.session.user_id]);
+  const result = await query('select callback as callbackURL, home, name, description, cast(id as char) as id from applications WHERE user_id = ?', [req.session.user_id]);
   res.send(makeSuccess(result));
 }));
 
@@ -318,14 +318,14 @@ app.put('/app/api/application/update', validator.applicationValidationRules(), v
 
   if (type === 0) {
     // UPDATE
-    query('update applications set name = ?, callback_url = ?, home = ?, description = ? WHERE name = ?',
+    query('update applications set name = ?, callback = ?, home = ?, description = ? WHERE name = ?',
       [data.name, data.callbackURL, data.home, data.description, parseInt(data.id, 10)]);
   } else if (type === 1) {
     // DELETE
     await query('delete from applications where id = ?', [parseInt(data.id, 10)]);
   } else if (type === 2) {
     // CREATE
-    await query('insert into applications(name, callback_url, home, description, user_id) values (?,?,?,?,?)',
+    await query('insert into applications(name, callback, home, description, user_id) values (?,?,?,?,?)',
       [data.name, data.callbackURL, data.home, data.description, req.session.user_id]);
   }
 
