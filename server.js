@@ -87,7 +87,6 @@ app.get('/app/api/social-media-socket/:name', asyncHandler(async (req, res, next
   }
 }));
 
-// //   Authentication Check    ////
 app.post('/app/api/auth/login', validator.loginValidationRules(), validator.validate, asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
