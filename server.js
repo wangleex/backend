@@ -13,7 +13,7 @@ const crypto = require('crypto');
 const passport = require('passport');
 const socketio = require('socket.io');
 const session = require('express-session');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const { CronJob } = require('cron');
 const expressMongoDb = require('express-mongo-db');
 const { introspectionQuery } = require('graphql');
@@ -29,7 +29,9 @@ const {
   makeGeneralError, makeSuccess, checkUser, getCronPattern,
 } = require('./util');
 
-app.use(express.static(path.join(__dirname, '/build'), { index: false }));
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, 'build'), { index: false }));
+}
 
 app.use(express.json());
 app.use(passport.initialize());
@@ -112,7 +114,7 @@ app.post('/app/api/auth/register', validator.registerValidationRules(), validato
   const { email, name, password } = req.body;
 
   query('insert into users(name, email, password) values (?,?,?)',
-    [name, email, await bcrypt.hash(password, 12)]);
+    [name, email, await bcrypt.hash(password, bcrypt.genSaltSync(12))]);
 
   const user = (await query('select id, isAdmin from users where email = ?', [email]))[0];
 
@@ -330,14 +332,15 @@ app.put('/app/api/application/update', validator.applicationValidationRules(), v
   res.send(makeSuccess(data));
 }));
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '/build', 'home.html'));
-});
+if (process.env.NODE_ENV === 'production') {
+  app.get(['/app', '/app/*'], (req, res) => {
+    res.sendFile(path.join(__dirname, 'build', 'index.html'));
+  });
 
-
-app.get(['/app', '/app/*'], (req, res) => {
-  res.sendFile(path.join(__dirname, '/build', 'index.html'));
-});
+  app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'build', 'home.html'));
+  });
+}
 
 // eslint-disable-next-line no-unused-vars
 app.use((error, _req, res, next) => {

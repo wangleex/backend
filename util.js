@@ -18,7 +18,7 @@ module.exports = {
   makeSuccess: (data) => ({ data }),
 
   checkUser: (req, res, next) => {
-    if (req.path.startsWith('/app/api/auth')) {
+    if (req.path === '/app/login' || req.path === '/app/register' || req.path === '/' || req.path === '/app' || req.path.startsWith('/app/api/auth')) {
       return next();
     }
 
