@@ -14,6 +14,7 @@ const passport = require('passport');
 const socketio = require('socket.io');
 const session = require('express-session');
 const bcrypt = require('bcryptjs');
+const { v4: uuidv4 } = require('uuid');
 const { CronJob } = require('cron');
 const expressMongoDb = require('express-mongo-db');
 const { introspectionQuery } = require('graphql');
@@ -112,8 +113,8 @@ app.post('/app/api/auth/login', validator.loginValidationRules(), validator.vali
 app.post('/app/api/auth/register', validator.registerValidationRules(), validator.validate, asyncHandler(async (req, res) => {
   const { email, name, password } = req.body;
 
-  query('insert into users(name, email, password) values (?,?,?)',
-    [name, email, await bcrypt.hash(password, bcrypt.genSaltSync(12))]);
+  query('insert into users(name, email, password, uuid) values (?,?,?,?)',
+    [name, email, await bcrypt.hash(password, bcrypt.genSaltSync(12)), uuidv4()]);
 
   const user = (await query('select id, isAdmin from users where email = ?', [email]))[0];
 
