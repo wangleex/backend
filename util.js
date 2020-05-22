@@ -20,7 +20,8 @@ module.exports = {
   checkUser: (req, res, next) => {
     if (req.path === '/app/login' || req.path === '/app/register'
     || req.path === '/' || req.path === '/app'
-    || req.path.startsWith('/app/api/auth' || req.path.startsWith('/auth'))) {
+    || req.path.startsWith('/app/api/auth' || req.path.startsWith('/auth'))
+    || req.path.startsWith('/app/api/social-media-socket')) {
       return next();
     }
 
