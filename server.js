@@ -77,7 +77,6 @@ app.get('/auth/reddit/callback', passport.authenticate('reddit'), authController
 app.get('/app/api/social-media-socket/:name', asyncHandler(async (req, res, next) => {
   req.session.name = req.params.name;
   req.session.socketId = req.query.socketId;
-  console.log(req.session.name);
 
   const source = await req.db.collection('graphql_servers').findOne({ name: req.params.name });
 
