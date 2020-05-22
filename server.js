@@ -344,6 +344,7 @@ if (process.env.NODE_ENV === 'production') {
 
 // eslint-disable-next-line no-unused-vars
 app.use((error, _req, res, next) => {
+  console.log(error);
   res.send(makeGeneralError([error.message]));
 });
 
