@@ -157,8 +157,9 @@ app.put('/app/api/server/update', validator.serverValidationRules(), validator.v
     // ADD
     await req.db.collection('graphql_servers').insertOne({ _id: await getNextSequenceValue('server_id', req.db), ...data, schema });
   } else if (type === 1) {
-    // DELETE (with cascading)
-    await req.db.collection('graphql_servers').deleteOne({ name: data.name });
+    // DELETE
+    await req.db.collection('graphql_servers').removeOne({ name: data.name });
+    await req.db.collection('queries').remove({ source: data.name });
   } else if (type === 2) {
     // UPDATE
     await req.db.collection('graphql_servers').updateOne({ name: data.name }, { ...data, schema });
@@ -249,7 +250,7 @@ app.put('/app/api/query/update', validator.queryValidationRules(), validator.val
 
   if (type === 0) {
     // ADD
-    req.db.collection('queries').insertOne({ ...data, serverId, user_id: req.session.user_id });
+    req.db.collection('queries').insertOne({ ...data, server_id: serverId, user_id: req.session.user_id });
 
     if (data.schedule !== 'Ad hoc') {
       const job = new CronJob({
@@ -262,11 +263,10 @@ app.put('/app/api/query/update', validator.queryValidationRules(), validator.val
 
       job.start();
     }
-
-    // cron job execute query and save in query histroy table
   } else if (type === 1) {
     // DELETE
-    // TODO
+    await req.db.collection('queries').removeOne({ name: data.name, user_id: req.session.user_id });
+    await req.db.collection('query_histories').remove({ query_name: data.name, user_id: req.session.user_id });
   } else if (type === 2) {
     // EXECUTE
     await executeQuery(url, slug, data.schema, serverId, req, data.name);
@@ -285,8 +285,8 @@ app.get('/app/api/query/history-records', asyncHandler(async (req, res) => {
 }));
 
 
-app.get('/app/api/users', asyncHandler(async (_req, res) => {
-  const users = await query('SELECT name, isAdmin, email, quota FROM users');
+app.get('/app/api/users', asyncHandler(async (req, res) => {
+  const users = await query('SELECT name, isAdmin, email, quota FROM users WHERE id <> ?', [req.session.user_id]);
 
   res.send(makeSuccess(users.map((user) => ({ ...user, usedQuota: 0 }))));
 }));
@@ -296,12 +296,14 @@ app.put('/app/api/user/update', asyncHandler(async (req, res) => {
 
   if (type === 0) {
     // DELETE
-    // emails are unique
-    // delete cascade TODO
-    await query('delete from users where email = ?', [data.name, data.email]);
+    const deletedUser = (await query('select id from users where email = ?', [data.email]))[0];
+
+    await req.db.collection('queries').remove({ user_id: deletedUser.id });
+    await req.db.collection('query_histories').remove({ user_id: deletedUser.id });
+
+    await query('delete from users where email = ?', [data.email]);
   } else if (type === 1) {
     // UPDATE
-    // emails are unique
     await query('update users set isAdmin = ?, quota = ? WHERE email = ?',
       [data.isAdmin, data.quota, data.name, data.email]);
   }
