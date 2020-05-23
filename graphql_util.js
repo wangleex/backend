@@ -66,7 +66,7 @@ module.exports = {
     let result;
     let duration;
 
-    if (accessToken) {
+    if (accessToken.length) {
       accessToken = accessToken[0].access_token;
     } else if (slug === 'nytimes') {
       accessToken = process.env.NYTIMES_KEY;
