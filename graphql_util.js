@@ -62,7 +62,7 @@ module.exports = {
   executeQuery: async (url, slug, schema, serverId, req, queryName) => {
     const timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
 
-    let accessToken = (await query('SELECT access_token FROM authorizations WHERE user_id = ? AND server_id = ?', [req.session.user_id, serverId]))[0];
+    let accessToken = await query('SELECT access_token FROM authorizations WHERE user_id = ? AND server_id = ?', [req.session.user_id, serverId]);
     let result;
     let duration;
 
