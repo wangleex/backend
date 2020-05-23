@@ -47,12 +47,12 @@ module.exports = {
     body('password', 'Password must be a minimum of eight characters and contain at least uppercase, one lowercase, one number, and one special character')
       .isLength({ min: 8 })
       .matches(/^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[^a-zA-Z0-9]).{8,}$/, 'i'),
-    body('invitationCode', 'Incorrect Invitation Code').equals('ListenOnlineUIUC'),
+    body('invitationCode', 'Incorrect Invitation Code').equals(process.env.INVITATION_CODE),
   ],
 
   serverValidationRules: () => [
     body('data.name').if(body('type').equals('0')).custom((name, { req }) => findServerByName(name, req)).withMessage('Server name already in use'),
-    body('data.slug').isIn(['reddit', 'youtube', 'twitter']).withMessage('Slug must be one of reddit, youtube, or twitter'),
+    body('data.slug').isIn(['reddit', 'youtube', 'twitter', 'nytimes']).withMessage('Slug must be one of reddit, youtube, or twitter'),
     body('data.url').isURL({ protocols: ['http', 'https'], require_protocol: true, require_tld: false }).withMessage('Server URL is invalid (Must include http or https at beginning)'),
     body('data.description').trim().escape(),
   ],

@@ -2,6 +2,7 @@ const axios = require('axios').default;
 const qs = require('querystring');
 const perf = require('execution-time')();
 const query = require('./sql');
+const { calculateQuotaUsed } = require('./mongodb_util');
 
 const toGraphQLQueryString = (node) => {
   const graphqlQuery = { string: node.name };
@@ -40,7 +41,14 @@ const toGraphQLQueryString = (node) => {
   return graphqlQuery.string;
 };
 
-const submitGraphQLQuery = async (url, accessToken, schema) => {
+const submitGraphQLQuery = async (url, accessToken, schema, req) => {
+  const { quota } = (await query('SELECT quota from users where id=?', [req.session.user_id]))[0];
+  const usedQuota = await calculateQuotaUsed(req.session.user_id, req.db);
+
+  if (usedQuota >= quota) {
+    throw new Error(`You have used ${usedQuota} MB of storage out of your quota of ${quota} MB. Remove some stored data in order to continue to query.`);
+  }
+
   perf.start();
   const result = (await axios.post(url, {
     accessToken,
@@ -54,11 +62,17 @@ module.exports = {
   executeQuery: async (url, slug, schema, serverId, req, queryName) => {
     const timestamp = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
 
-    const accessToken = (await query('SELECT access_token FROM authorizations WHERE user_id = ? AND server_id = ?', [req.session.user_id, serverId]))[0].access_token;
+    let accessToken = (await query('SELECT access_token FROM authorizations WHERE user_id = ? AND server_id = ?', [req.session.user_id, serverId]))[0];
     let result;
     let duration;
 
-    ({ result, duration } = await submitGraphQLQuery(url, accessToken, schema));
+    if (accessToken) {
+      accessToken = accessToken[0].access_token;
+    } else if (slug === 'nytimes') {
+      accessToken = process.env.NYTIMES_KEY;
+    }
+
+    ({ result, duration } = await submitGraphQLQuery(url, accessToken, schema, req));
 
     if (result.errors && result.errors[0].extensions.statusCode === 401) {
       const refreshToken = (await query('SELECT refresh_token FROM authorizations WHERE user_id = ? AND server_id = ?', [req.session.user_id, serverId]))[0].refresh_token;
@@ -96,7 +110,7 @@ module.exports = {
       query('update authorizations set access_token = ? WHERE user_id = ? AND server_id = ?',
         [newAccessToken, req.session.user_id, serverId]);
 
-      ({ result, duration } = await submitGraphQLQuery(url, newAccessToken, schema));
+      ({ result, duration } = await submitGraphQLQuery(url, newAccessToken, schema, req));
     }
 
     req.db.collection('query_histories').insertOne({
@@ -106,6 +120,7 @@ module.exports = {
       data: result,
       user_id: req.session.user_id,
     });
+
 
     const applications = await query('SELECT callback FROM applications WHERE user_id=?', [req.session.user_id]);
 

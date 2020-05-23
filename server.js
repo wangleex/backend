@@ -21,7 +21,7 @@ const { introspectionQuery } = require('graphql');
 const MongoStore = require('connect-mongo')(session);
 const asyncHandler = require('express-async-handler');
 const validator = require('./validator.js');
-const { getNextSequenceValue, client } = require('./mongodb_util');
+const { getNextSequenceValue, client, calculateQuotaUsed } = require('./mongodb_util');
 const { executeQuery } = require('./graphql_util');
 const query = require('./sql');
 const authController = require('./lib/auth.controller');
@@ -75,16 +75,14 @@ app.get('/auth/youtube/callback', passport.authenticate('youtube'), authControll
 app.get('/auth/reddit/callback', passport.authenticate('reddit'), authController.reddit);
 
 app.get('/app/api/social-media-socket/:name', asyncHandler(async (req, res, next) => {
-  req.session.name = req.params.name;
+  req.session.slug = req.params.name;
   req.session.socketId = req.query.socketId;
 
-  const source = await req.db.collection('graphql_servers').findOne({ name: req.params.name });
-
-  if (source.slug === 'reddit') {
+  if (req.session.slug === 'reddit') {
     req.session.state = crypto.randomBytes(32).toString('hex');
     passport.authenticate('reddit', { state: req.session.state, duration: 'permanent' })(req, res, next);
   } else {
-    passport.authenticate(source.slug)(req, res, next);
+    passport.authenticate(req.session.slug)(req, res, next);
   }
 }));
 
@@ -187,12 +185,15 @@ app.get('/app/api/social-media-platforms', asyncHandler(async (req, res) => {
   const authorizations = await query('SELECT server_id FROM authorizations WHERE user_id = ?', [req.session.user_id]);
 
   const servers = await req.db.collection('graphql_servers').find({}).toArray();
+
   servers.forEach((server) => {
-    allServers.push({
-      name: server.name,
-      imageURL: '',
-      isAuthenticated: authorizations.some((auth) => auth.server_id === server._id),
-    });
+    if (server.requireAuthorization && !(allServers.some((s) => server.slug === s.name))) {
+      allServers.push({
+        name: server.slug,
+        imageURL: '',
+        isAuthenticated: authorizations.includes(server._id),
+      });
+    }
   });
 
   res.send(makeSuccess(allServers));
@@ -221,8 +222,7 @@ app.get('/app/api/query/sources', asyncHandler(async (req, res) => {
   // Likewise if the server doesn't require authorizaiton they can query it
   sources = sources.filter((source) => {
     if (source.requireAuthentication || source.requireAuthorization) {
-      const userAuthorization = authorizations.find((auth) => auth.server_id === source._id);
-      return userAuthorization;
+      return authorizations.some((auth) => auth.server_id === source._id);
     }
 
     return true;
@@ -286,9 +286,14 @@ app.get('/app/api/query/history-records', asyncHandler(async (req, res) => {
 
 
 app.get('/app/api/users', asyncHandler(async (req, res) => {
-  const users = await query('SELECT name, isAdmin, email, quota FROM users WHERE id <> ?', [req.session.user_id]);
+  const users = await query('SELECT name, isAdmin, email, quota, id FROM users WHERE id <> ?', [199]);
 
-  res.send(makeSuccess(users.map((user) => ({ ...user, usedQuota: 0 }))));
+  const results = users.map(async (user) => ({
+    ...user,
+    usedQuota: (await calculateQuotaUsed(user.id, req.db)),
+  }));
+
+  res.send(makeSuccess(await Promise.all(results)));
 }));
 
 app.put('/app/api/user/update', asyncHandler(async (req, res) => {

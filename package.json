@@ -27,7 +27,7 @@
     "express-session": "^1.17.1",
     "express-validator": "^6.5.0",
     "graphql": "^14.6.0",
-    "jsonwebtoken": "^8.5.1",
+    "json-size": "^1.0.0",
     "mongodb": "^3.5.3",
     "mysql": "^2.18.1",
     "passport": "^0.4.1",
